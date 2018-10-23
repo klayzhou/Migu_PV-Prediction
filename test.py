@@ -1,5 +1,5 @@
 import json
-import datetime
+from datetime import datetime as dt
 import os
 import time
 from es_search import es_search
@@ -135,7 +135,7 @@ def get_information():
 def get_all_information():
     res = []
     for index in range(1,22):
-        with open(os.path.join(r'D:\AllProject\PV\information',str(index)+'.txt'),'r',encoding='UTF-8')	as fread:
+        with open(os.path.join(r'D:/VVPrediction/output',str(index)+'.txt'),'r',encoding='UTF-8')	as fread:
             out = fread.read()
             out = json.loads(out)
             res = res + out
@@ -248,10 +248,59 @@ def process_date(date_str):
     if not temp:
         return ''
     elif len(temp) == 1 or (not temp[1]):
-        return int(temp[0]),0
+            return temp[0]+'-01'
     else:
-        return int(temp[0]),int(temp[1])
+        if temp[1].isdigit():
+            return temp[0]+'-'+temp[1]
+        else:
+            return '19'+temp[0]+'-01'
+'''
+	  节目ID	 标题  创建时间	一级分类编号	一级分类名称	剧集类型	剧集时长	节目介绍	关键词	各大属性！															
+旧版     0	  1	     2	       3	        4	        5	     6	  7	      8	       9													
+新版 	id	title	createtime	displaytype	      formtype  duration detail	keywords  上映时间	主题	 正片/花絮	演员名	演员id
+														
+'''
+
+def extra_feature():
+    res = get_all_information()
+    for item in res:
+
+        release_time = ''
+        topic = []
+        formtype = ''
+        peoples = []
+        peoples_ID = []
+
+        time_flag = False
+
+        if item[9] and isinstance(item[9],dict):
+            for iter in item[9]:
+                if iter['propertyKey'] in ['主演','演员','男主角','嘉宾','主持人','导演','编剧','人物','演出人员','报道人物','歌手姓名','解说员','明星','原著作者']:
+                    if 'propertyValue' in iter.keys():
+                        peoples.append(iter['propertyValue'])
+                    if 'propertyItem' in iter.keys():
+                        peoples_ID.append(iter['propertyItem'])
+
+                elif time_flag== False and iter['propertyKey'] in ['国内首映时间','首播时间','上映时间','播出时间','待映日期','发行年份','事件发生时间','播出年代']:
+                    time = process_date(iter['propertyValue'])
+                    if time:
+                        release_time = time
+                        time_flag = True
+
+                elif iter['propertyKey'] in ['内容形态','节目形态']:
+                    formtype = iter['propertyValue']
+
+                elif iter['propertyKey'] in ['内容类型','内容分类','主题','描述年代']:
+                    topic.append(iter['propertyValue'])
+
+
+        if time_flag==False:
+            release_time = dt.strftime(dt.strptime(item[2],'%Y-%m-%d %H:%M:%S'),'%Y-%m')
+
+
+
+
 
 if __name__ == '__main__':
-    #get_clean_data()
+    extra_feature()
     
