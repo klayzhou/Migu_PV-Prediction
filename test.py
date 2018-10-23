@@ -253,5 +253,5 @@ def process_date(date_str):
         return int(temp[0]),int(temp[1])
 
 if __name__ == '__main__':
-    get_clean_data()
+    #get_clean_data()
     
