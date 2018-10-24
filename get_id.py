@@ -1,7 +1,6 @@
 import json
 import os
 import time
-from datetime import datetime as dt
 from es_search import es_search
 
 """

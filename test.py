@@ -127,8 +127,6 @@ def extra_feature():
 
 
 
-
-
 if __name__ == '__main__':
     extra_feature()
     #get_all_information()
