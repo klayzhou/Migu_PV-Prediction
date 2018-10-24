@@ -300,7 +300,13 @@ def extra_feature():
         if time_flag==False:
             release_time = dt.strftime(dt.strptime(item[2],'%Y-%m-%d %H:%M:%S'),'%Y-%m')
 
-
+def process_content_type(content_str):
+    if content_str.isdigit():
+        return []
+    elif content_str.find('|') >= 0:
+        return content_str.split('|')
+    else:
+        return [content_str]
 
 
 
