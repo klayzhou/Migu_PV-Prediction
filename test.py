@@ -220,6 +220,8 @@ def get_clean_data():
     print(str(count))
 
 def process_date(date_str):
+    if len(date_str)<=2:
+        return ''
     temp = []
     if date_str[0] == '-':
         #print('1')
@@ -254,6 +256,16 @@ def process_date(date_str):
             return temp[0]+'-'+temp[1]
         else:
             return '19'+temp[0]+'-01'
+
+def process_content_type(content_str):
+    if content_str.isdigit():
+        return []
+    elif content_str.find('|') >= 0:
+        return content_str.split('|')
+    else:
+        return [content_str]
+
+
 '''
 	  节目ID	 标题  创建时间	一级分类编号	一级分类名称	剧集类型	剧集时长	节目介绍	关键词	各大属性！															
 旧版     0	  1	     2	       3	        4	        5	     6	  7	      8	       9													
@@ -264,7 +276,7 @@ def process_date(date_str):
 def extra_feature():
     res = get_all_information()
 
-
+    diff = set()
     feature = []
 
     for item in res:
@@ -274,10 +286,10 @@ def extra_feature():
         formtype = ''
         peoples = []
         peoples_ID = []
+        keywords = []
 
         time_flag = False
-
-        if item[9] and isinstance(item[9],dict):
+        if item[9] and isinstance(item[9],list):
             for iter in item[9]:
                 if iter['propertyKey'] in ['主演','演员','男主角','嘉宾','主持人','导演','编剧','人物','演出人员','报道人物','歌手姓名','解说员','明星','原著作者']:
                     if 'propertyValue' in iter.keys():
@@ -295,18 +307,12 @@ def extra_feature():
                     formtype = iter['propertyValue']
 
                 elif iter['propertyKey'] in ['内容类型','内容分类','主题','描述年代']:
-                    topic.append(iter['propertyValue'])
+                    topic.append(process_content_type(iter['propertyValue']))
 
         if time_flag==False:
             release_time = dt.strftime(dt.strptime(item[2],'%Y-%m-%d %H:%M:%S'),'%Y-%m')
 
-def process_content_type(content_str):
-    if content_str.isdigit():
-        return []
-    elif content_str.find('|') >= 0:
-        return content_str.split('|')
-    else:
-        return [content_str]
+        keywords = item[8].split(',')
 
 
 
