@@ -1,3 +1,4 @@
+import jieba
 import json
 import os
 import time
@@ -69,7 +70,7 @@ def process_content_type(content_str):
 '''
 	  节目ID	 标题  创建时间	一级分类编号	一级分类名称	剧集类型	剧集时长	节目介绍	关键词	各大属性！															
 旧版     0	  1	     2	       3	        4	        5	     6	  7	      8	       9													
-新版 	id	title	createtime	displaytype	      formtype  duration detail	keywords  上映时间	主题	 正片/花絮	演员名	演员id
+新版 	id	标题的分词	createtime	displaytype	      formtype  duration detail	keywords  上映时间	主题	 正片/花絮	演员名	演员id
 														
 '''
 def extra_feature():
@@ -78,13 +79,15 @@ def extra_feature():
     feature_dir = os.path.join(os.path.abspath('..'), 'feature')
 
     for index in range(1,22):
+        print('file ' + str(index) + ' is processing')
         feature = []
         with open(os.path.join(program_information_dir,str(index)+'.txt'),'r',encoding='UTF-8')	as fread:
             res = fread.read()
             res = json.loads(res)
 
             for item in res:
-
+                
+                name_list = None
                 release_time = ''
                 topic = []
                 formtype = ''
@@ -92,6 +95,7 @@ def extra_feature():
                 peoples_ID = []
                 keywords = []
 
+                name_list = list(jieba.cut(item[1],cut_all = False))
                 time_flag = False
                 if item[9] and isinstance(item[9],list):
                     for iter in item[9]:
@@ -111,14 +115,21 @@ def extra_feature():
                             formtype = iter['propertyValue']
 
                         elif iter['propertyKey'] in ['内容类型','内容分类','主题','描述年代']:
-                            topic.append(process_content_type(iter['propertyValue']))
+                            temp = process_content_type(iter['propertyValue'])
+                            if not temp:
+                                pass
+                            elif len(temp) == 1:
+                                topic.append(temp[0])
+                            else:
+                                for j in temp:
+                                    topic.append(j)
 
                 if time_flag==False:
                     release_time = dt.strftime(dt.strptime(item[2],'%Y-%m-%d %H:%M:%S'),'%Y-%m')
 
                 keywords = item[8].split(',')
 
-                feature.append([item[0],item[1],item[2],item[3],item[5],item[6],item[7],keywords,release_time,topic,formtype,peoples,peoples_ID])
+                feature.append([item[0],name_list,item[2],item[3],item[5],item[6],item[7],keywords,release_time,topic,formtype,peoples,peoples_ID])
 
             res_file = json.dumps(feature, ensure_ascii=False)
             with open(os.path.join(feature_dir, str(index)+'.txt'),'w',encoding='UTF-8') as fwrite:
