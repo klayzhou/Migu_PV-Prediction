@@ -307,7 +307,6 @@ def process_content_type(content_str):
 def extra_feature():
     res = get_all_information()
 
-    diff = set()
     feature = []
 
     for item in res:
@@ -345,8 +344,18 @@ def extra_feature():
 
         keywords = item[8].split(',')
 
+        feature.append([item[0],item[1],item[2],item[3],item[5],item[6],item[7],keywords,release_time,topic,formtype,peoples,peoples_ID])
+
+        print(feature)
+
+    res_file = json.dumps(feature, ensure_ascii=False)
+
+    return res_file
+
+
+
 
 
 if __name__ == '__main__':
-    #extra_feature()
-    get_all_information()
+    extra_feature()
+    #get_all_information()
