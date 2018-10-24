@@ -1,8 +1,9 @@
-# Migu_PV-Prediction存放所有的代码文件，该目录也是github上的项目目录
+﻿# Migu_PV-Prediction存放所有的代码文件，该目录也是github上的项目目录
 # dat存放原始的dat文件和result.csv文件
 # IDs存放所有的存储节目ID的txt文件，共21个
 # program_information存放所有的存储节目详细信息的txt文件，共21个
 # program_information_1.0存放所有的存储节目详细信息的txt文件，共21个。该文件夹是program_information文件夹的过滤版本，垃圾节目已经被删除掉
+#feature存放处理完的特征
 # 目录结构如下：
 
 --Migu_PV-Prediction
@@ -13,3 +14,4 @@
 --IDs
 --program_information
 --program_information_1.0
+--feature
