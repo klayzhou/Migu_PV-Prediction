@@ -263,6 +263,10 @@ def process_date(date_str):
 
 def extra_feature():
     res = get_all_information()
+
+
+    feature = []
+
     for item in res:
 
         release_time = ''
@@ -292,7 +296,6 @@ def extra_feature():
 
                 elif iter['propertyKey'] in ['内容类型','内容分类','主题','描述年代']:
                     topic.append(iter['propertyValue'])
-
 
         if time_flag==False:
             release_time = dt.strftime(dt.strptime(item[2],'%Y-%m-%d %H:%M:%S'),'%Y-%m')
