@@ -73,8 +73,9 @@ def extra_feature():
     program_information_dir = os.path.join(os.path.abspath('..'), 'program_information_1.0')
     feature_dir = os.path.join(os.path.abspath('..'), 'feature')
     actor_lst = []
-    count = 0
     feature = []
+
+    #diff = set()
 
     for index in range(1,22):
         print('file ' + str(index) + ' is processing')
@@ -83,8 +84,6 @@ def extra_feature():
             res = json.loads(res)
 
             for item in res:
-
-                count = count + 1
                 name_list = None
                 release_time = ''
                 topic = []
@@ -99,7 +98,7 @@ def extra_feature():
                 if item[9] and isinstance(item[9],list):
                     for iter in item[9]:
                         if iter['propertyKey'] in ['主演','演员','男主角','嘉宾','主持人','导演','编剧','人物','演出人员','报道人物','歌手姓名','解说员','明星','原著作者']:
-                            if 'propertyValue' in iter.keys() and iter['propertyValue']!='其他':
+                            if 'propertyValue' in iter.keys() and iter['propertyValue']!='其他' and iter['propertyValue']!='无':
                                 peoples.add(iter['propertyValue'])
                                 if 'propertyItem' in iter.keys() and iter['propertyItem'].isdigit():
                                     peoples_ID.add(iter['propertyItem'])
@@ -119,9 +118,11 @@ def extra_feature():
                                 pass
                             elif len(temp) == 1:
                                 topic.append(temp[0])
+                                #diff.add(temp[0])
                             else:
                                 for j in temp:
                                     topic.append(j)
+                                    #diff.add(j)
 
                 if time_flag==False:
                     release_time = dt.strftime(dt.strptime(item[2],'%Y-%m-%d %H:%M:%S'),'%Y-%m')
@@ -129,11 +130,11 @@ def extra_feature():
                 keywords = item[8].split(',')
                 #print(peoples_ID)
 
-                actor_lst.extend(list(peoples_ID))
+                actor_lst.extend(list(peoples))
 
                 feature.append([item[0],name_list,item[2],item[3],item[5],item[6],item[7],keywords,release_time,topic,formtype,peoples,peoples_ID])
 
-
+    # find the top 2000 actors
     counter = collections.Counter(actor_lst)
     sorted_actor = sorted(counter.items(), key= lambda x:x[1], reverse=True)
     invalid_actor = dict(sorted_actor[:2000])
@@ -147,17 +148,16 @@ def extra_feature():
     count = 0
     tmp_feature = []
     for item in feature:
+        # delete the useless actor name and actor id
         tmp_lst = item[:11]
         count = count + 1
         one_hot_actor = zeros(2000)
-        for iter in item[12]:
+        for iter in item[11]:
             if iter in invalid_actor:
                 one_hot_actor[invalid_actor[iter]] = 1
 
-        #delete the useless actor name and actor id
         tmp_lst.append(one_hot_actor.tolist())
         tmp_feature.append(tmp_lst)
-        if count<500:
         if count%10000 == 0:
             with open(os.path.join(feature_dir, str(int(count / 10000)) + '.txt'), 'w', encoding='UTF-8') as fwrite:
                 fwrite.write(json.dumps(tmp_feature, ensure_ascii=False))
@@ -168,15 +168,6 @@ def extra_feature():
 
 
 
-
-
-
-
-
-    #print(len(actor_lst))
-
-
-# choose the largest 2000 actors;
 
 if __name__ == '__main__':
     extra_feature()
