@@ -75,7 +75,8 @@ def extra_feature():
     actor_lst = []
     feature = []
 
-    #diff = set()
+    formtype_set = set()
+    topic_set = set()
 
     for index in range(1,22):
         print('file ' + str(index) + ' is processing')
@@ -111,6 +112,8 @@ def extra_feature():
 
                         elif iter['propertyKey'] in ['内容形态','节目形态']:
                             formtype = iter['propertyValue']
+                            if formtype:
+                                formtype_set.add(formtype)
 
                         elif iter['propertyKey'] in ['内容类型','内容分类','主题','描述年代']:
                             temp = process_content_type(iter['propertyValue'])
@@ -118,11 +121,11 @@ def extra_feature():
                                 pass
                             elif len(temp) == 1:
                                 topic.append(temp[0])
-                                #diff.add(temp[0])
+                                topic_set.add(temp[0])
                             else:
                                 for j in temp:
                                     topic.append(j)
-                                    #diff.add(j)
+                                    topic_set.add(j)
 
                 if time_flag==False:
                     release_time = dt.strftime(dt.strptime(item[2],'%Y-%m-%d %H:%M:%S'),'%Y-%m')
@@ -145,24 +148,51 @@ def extra_feature():
         invalid_actor[item] = num
         num = num + 1
 
+    formtype_dict = {}
+    formtype_len = len(formtype_set)
+    num=0
+    for i in formtype_set:
+        formtype_dict[i] = num
+        num = num + 1
+
+    topic_dict = {}
+    topic_len = len(topic_set)
+    num = 0
+    for i in topic_set:
+        topic_dict[i] = num
+        num = num + 1
+
     count = 0
-    tmp_feature = []
+    tmp_feature = {}
     for item in feature:
         # delete the useless actor name and actor id
-        tmp_lst = item[:11]
+        tmp_lst = item[1:9]
         count = count + 1
         one_hot_actor = zeros(2000)
+        formtype_vector = zeros(formtype_len)
+        topic_vector = zeros(topic_len)
+
         for iter in item[11]:
             if iter in invalid_actor:
                 one_hot_actor[invalid_actor[iter]] = 1
 
+        if item[10]:
+            formtype_vector[formtype_dict[item[10]]] = 1
+
+        for iter in item[9]:
+            topic_vector[topic_dict[iter]] = 1
+
+        tmp_lst.append(topic_vector.tolist())
+        tmp_lst.append(formtype_vector.tolist())
         tmp_lst.append(one_hot_actor.tolist())
-        tmp_feature.append(tmp_lst)
+        tmp_feature[item[0]] = tmp_lst
         if count%10000 == 0:
+            print('file ' + str(int(count / 10000)) + ' is processing')
             with open(os.path.join(feature_dir, str(int(count / 10000)) + '.txt'), 'w', encoding='UTF-8') as fwrite:
                 fwrite.write(json.dumps(tmp_feature, ensure_ascii=False))
                 tmp_feature.clear()
 
+    print('file ' + str(int(1 + count / 10000)) + ' is processing')
     with open(os.path.join(feature_dir, str(int(1 + count / 10000)) + '.txt'), 'w', encoding='UTF-8') as fwrite:
         fwrite.write(json.dumps(tmp_feature, ensure_ascii=False))
 
