@@ -4,6 +4,9 @@ import os
 import time
 from datetime import datetime as dt
 from es_search import es_search
+import matplotlib.pyplot as plt
+import collections
+from numpy import *
 
 """
 处理content_type字符串
@@ -58,14 +61,6 @@ def process_date(date_str):
         else:
             return '19'+temp[0]+'-01'
 
-def process_content_type(content_str):
-    if content_str.isdigit():
-        return []
-    elif content_str.find('|') >= 0:
-        return content_str.split('|')
-    else:
-        return [content_str]
-
 
 '''
 	  节目ID	 标题  创建时间	一级分类编号	一级分类名称	剧集类型	剧集时长	节目介绍	关键词	各大属性！															
@@ -77,33 +72,37 @@ def extra_feature():
 
     program_information_dir = os.path.join(os.path.abspath('..'), 'program_information_1.0')
     feature_dir = os.path.join(os.path.abspath('..'), 'feature')
+    actor_lst = []
+    count = 0
+    feature = []
 
     for index in range(1,22):
         print('file ' + str(index) + ' is processing')
-        feature = []
         with open(os.path.join(program_information_dir,str(index)+'.txt'),'r',encoding='UTF-8')	as fread:
             res = fread.read()
             res = json.loads(res)
 
             for item in res:
-                
+
+                count = count + 1
                 name_list = None
                 release_time = ''
                 topic = []
                 formtype = ''
-                peoples = []
-                peoples_ID = []
+                peoples = set() # delete the repeated words
+                peoples_ID = set() # delete the repeated words
                 keywords = []
-
                 name_list = list(jieba.cut(item[1],cut_all = False))
+                #print(name_list)
                 time_flag = False
+
                 if item[9] and isinstance(item[9],list):
                     for iter in item[9]:
                         if iter['propertyKey'] in ['主演','演员','男主角','嘉宾','主持人','导演','编剧','人物','演出人员','报道人物','歌手姓名','解说员','明星','原著作者']:
-                            if 'propertyValue' in iter.keys():
-                                peoples.append(iter['propertyValue'])
-                            if 'propertyItem' in iter.keys():
-                                peoples_ID.append(iter['propertyItem'])
+                            if 'propertyValue' in iter.keys() and iter['propertyValue']!='其他':
+                                peoples.add(iter['propertyValue'])
+                                if 'propertyItem' in iter.keys() and iter['propertyItem'].isdigit():
+                                    peoples_ID.add(iter['propertyItem'])
 
                         elif time_flag== False and iter['propertyKey'] in ['国内首映时间','首播时间','上映时间','播出时间','待映日期','发行年份','事件发生时间','播出年代']:
                             time = process_date(iter['propertyValue'])
@@ -128,15 +127,56 @@ def extra_feature():
                     release_time = dt.strftime(dt.strptime(item[2],'%Y-%m-%d %H:%M:%S'),'%Y-%m')
 
                 keywords = item[8].split(',')
+                #print(peoples_ID)
+
+                actor_lst.extend(list(peoples_ID))
 
                 feature.append([item[0],name_list,item[2],item[3],item[5],item[6],item[7],keywords,release_time,topic,formtype,peoples,peoples_ID])
 
-            res_file = json.dumps(feature, ensure_ascii=False)
-            with open(os.path.join(feature_dir, str(index)+'.txt'),'w',encoding='UTF-8') as fwrite:
-                fwrite.write(res_file)
-                fwrite.flush()
+
+    counter = collections.Counter(actor_lst)
+    sorted_actor = sorted(counter.items(), key= lambda x:x[1], reverse=True)
+    invalid_actor = dict(sorted_actor[:2000])
+
+    # one-hot encoding for actor id
+    num = 0
+    for item in invalid_actor:
+        invalid_actor[item] = num
+        num = num + 1
+
+    count = 0
+    tmp_feature = []
+    for item in feature:
+        tmp_lst = item[:11]
+        count = count + 1
+        one_hot_actor = zeros(2000)
+        for iter in item[12]:
+            if iter in invalid_actor:
+                one_hot_actor[invalid_actor[iter]] = 1
+
+        #delete the useless actor name and actor id
+        tmp_lst.append(one_hot_actor.tolist())
+        tmp_feature.append(tmp_lst)
+        if count<500:
+        if count%10000 == 0:
+            with open(os.path.join(feature_dir, str(int(count / 10000)) + '.txt'), 'w', encoding='UTF-8') as fwrite:
+                fwrite.write(json.dumps(tmp_feature, ensure_ascii=False))
+                tmp_feature.clear()
+
+    with open(os.path.join(feature_dir, str(int(1 + count / 10000)) + '.txt'), 'w', encoding='UTF-8') as fwrite:
+        fwrite.write(json.dumps(tmp_feature, ensure_ascii=False))
 
 
+
+
+
+
+
+
+    #print(len(actor_lst))
+
+
+# choose the largest 2000 actors;
 
 if __name__ == '__main__':
     extra_feature()
