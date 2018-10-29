@@ -61,6 +61,22 @@ def process_date(date_str):
         else:
             return '19'+temp[0]+'-01'
 
+"""
+处理形如“2018100901”的时间字符串，返回时间和星期的one-hot向量
+"""
+def process_time(time_str):
+    year = int(time_str[0:4])
+    month = int(time_str[4:6])
+    day = int(time_str[6:8])
+    time_id = int(time_str[8:])
+    weekday_id = dt(year,month,day).weekday()
+    weekday_vector = zeros(7)
+    weekday_vector[weekday_id] = 1
+    time_vector = zeros(24)
+    time_vector[time_id] = 1
+    return list(weekday_vector),list(time_vector)
+    
+
 
 '''
 	  节目ID	 标题  创建时间	一级分类编号	一级分类名称	剧集类型	剧集时长	节目介绍	关键词	各大属性！															
