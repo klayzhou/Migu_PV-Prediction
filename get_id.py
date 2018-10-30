@@ -154,13 +154,14 @@ def get_information():
 
 
 def get_all_information():
-    res = []
+    res = {}
     program_information_dir = os.path.join(os.path.abspath('..'), 'feature')
     for index in range(1, 22):
+        print('file ' + str(index) + ' is being reading')
         with open(os.path.join(program_information_dir, str(index) + '.txt'), 'r', encoding='UTF-8')    as fread:
             out = fread.read()
             out = json.loads(out)
-            res = res + out
+            res.update(out)
     return res
 
 
