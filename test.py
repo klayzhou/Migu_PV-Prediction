@@ -75,8 +75,10 @@ def extra_feature():
     actor_lst = []
     feature = []
 
-    formtype_set = set()
+    program_type_set = set()
     topic_set = set()
+    form_type_set = set()
+
 
     for index in range(1,22):
         print('file ' + str(index) + ' is processing')
@@ -113,7 +115,7 @@ def extra_feature():
                         elif iter['propertyKey'] in ['内容形态','节目形态']:
                             formtype = iter['propertyValue']
                             if formtype:
-                                formtype_set.add(formtype)
+                                program_type_set.add(formtype)
 
                         elif iter['propertyKey'] in ['内容类型','内容分类','主题','描述年代']:
                             temp = process_content_type(iter['propertyValue'])
@@ -137,6 +139,9 @@ def extra_feature():
 
                 feature.append([item[0],name_list,item[2],item[3],item[5],item[6],item[7],keywords,release_time,topic,formtype,peoples,peoples_ID])
 
+                # form_type one-hot encoder
+                form_type_set.add(item[5])
+
     # find the top 2000 actors
     counter = collections.Counter(actor_lst)
     sorted_actor = sorted(counter.items(), key= lambda x:x[1], reverse=True)
@@ -148,11 +153,20 @@ def extra_feature():
         invalid_actor[item] = num
         num = num + 1
 
-    formtype_dict = {}
-    formtype_len = len(formtype_set)
+    num = 0
+
+    display_dict = {'1000':0,'1001':1,'1002':2,'1003':3,'1004':4,'1005':5,'1006':6,'1007':7,'1008':8,'1009':9,'1010':10,'1011':11}
+    form_type_dict = {}
+    form_type_len = len(form_type_set)
+    for i in form_type_set:
+        form_type_dict[i] = num
+        num = num + 1
+
+    programtype_dict = {}
+    programtype_len = len(program_type_set)
     num=0
-    for i in formtype_set:
-        formtype_dict[i] = num
+    for i in program_type_set:
+        programtype_dict[i] = num
         num = num + 1
 
     topic_dict = {}
@@ -166,26 +180,39 @@ def extra_feature():
     tmp_feature = {}
     for item in feature:
         # delete the useless actor name and actor id
-        tmp_lst = item[1:9]
+        tmp_lst = item[1:3]
         count = count + 1
+        display_vector = zeros(12)
+        form_type_vector = zeros(form_type_len)
         one_hot_actor = zeros(2000)
-        formtype_vector = zeros(formtype_len)
+        programtype_vector = zeros(programtype_len)
         topic_vector = zeros(topic_len)
+
+        if item[3]:
+            if item[3] in display_dict:
+                display_vector[display_dict[item[3]]] =1
+
+        if item[4]:
+            form_type_vector[form_type_dict[item[4]]] = 1
 
         for iter in item[11]:
             if iter in invalid_actor:
                 one_hot_actor[invalid_actor[iter]] = 1
 
         if item[10]:
-            formtype_vector[formtype_dict[item[10]]] = 1
+            programtype_vector[programtype_dict[item[10]]] = 1
 
         for iter in item[9]:
             topic_vector[topic_dict[iter]] = 1
 
+        tmp_lst.append(display_vector.tolist())
+        tmp_lst.append(form_type_vector.tolist())
+        tmp_lst.extend(item[5:9])
         tmp_lst.append(topic_vector.tolist())
-        tmp_lst.append(formtype_vector.tolist())
+        tmp_lst.append(programtype_vector.tolist())
         tmp_lst.append(one_hot_actor.tolist())
         tmp_feature[item[0]] = tmp_lst
+
         if count%10000 == 0:
             print('file ' + str(int(count / 10000)) + ' is processing')
             with open(os.path.join(feature_dir, str(int(count / 10000)) + '.txt'), 'w', encoding='UTF-8') as fwrite:
