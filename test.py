@@ -78,6 +78,37 @@ def process_time(time_str):
     
 
 
+"""
+计算从上映时间到当前时间为止，共多少个月间隔
+"""
+def calculate_releasetime_interval(time_str, releasetime_str):
+    year = int(time_str[0:4])
+    month = int(time_str[4:6])
+    day = int(time_str[6:8])
+
+    temp = releasetime_str.split('-')
+    releasetime_year = int(temp[0])
+    releasetime_month = int(temp[1])
+
+    return ((dt(year,month,day)-dt(releasetime_year,releasetime_month,1)).days//30)
+
+
+"""
+计算从创建时间到当前时间为止，共多少天间隔
+"""
+def calculate_createtime_interval(time_str, createtime_str):
+    year = int(time_str[0:4])
+    month = int(time_str[4:6])
+    day = int(time_str[6:8])
+
+    temp = createtime_str.split('-')
+    createtime_year = int(temp[0])
+    createtime_month = int(temp[1])
+    createtime_day = int(temp[2].split(' ')[0])
+
+    return (dt(year,month,day)-dt(createtime_year,createtime_month,createtime_day)).days
+
+
 '''
 	  节目ID	 标题  创建时间	一级分类编号	一级分类名称	剧集类型	剧集时长	节目介绍	关键词	各大属性！															
 旧版     0	  1	     2	       3	        4	        5	     6	  7	      8	       9													
