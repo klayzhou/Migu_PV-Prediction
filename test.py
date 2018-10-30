@@ -240,8 +240,6 @@ def extra_feature():
         fwrite.write(json.dumps(tmp_feature, ensure_ascii=False))
 
 
-
-
 if __name__ == '__main__':
     extra_feature()
     #get_all_information()
