@@ -63,6 +63,13 @@ def get_IDs():
     print(str(count) + ' ' + str(len(Idset)))
     return Idset
 
+"""
+读取csv文件，合并不同comp下同一节目的点击量
+"""
+def sumup_vv():
+    filePath = os.path.join(os.path.abspath('..'), 'dat', 'result.csv')
+
+
 
 """
 将节目ID的集合以单位为10000划分到21个txt文件中去
@@ -156,7 +163,7 @@ def get_information():
 def get_all_information():
     res = {}
     program_information_dir = os.path.join(os.path.abspath('..'), 'feature')
-    for index in range(1, 22):
+    for index in range(1, 5):
         print('file ' + str(index) + ' is being reading')
         with open(os.path.join(program_information_dir, str(index) + '.txt'), 'r', encoding='UTF-8')    as fread:
             out = fread.read()
@@ -252,3 +259,6 @@ def get_clean_data():
         print('file ' + str(index) + ' has done')
     print(str(count))
 
+if __name__ == '__main__':
+    get_IDs()
+    #get_all_information()
