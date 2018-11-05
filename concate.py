@@ -19,11 +19,11 @@ def concate_feature():
         line = fread.readline()
         tmp = line.strip().split('|')
         time = tmp[0]
-        Click[tmp[2]] = tmp[3]
+        Click[tmp[2]] = int(tmp[3])
         count = 1
         for line in fread.readlines():
             count = count + 1
-            tmp = line.split('|')
+            tmp = line.strip().split('|')
             if tmp[0]!= time:
                 for key in Click:
                     if key in init_feature:
@@ -42,17 +42,18 @@ def concate_feature():
                 time = tmp[0]
 
             if tmp[2] in Click:
-                Click[tmp[2]] = Click[tmp[2]] + tmp[3]
+                Click[tmp[2]] = Click[tmp[2]] + int(tmp[3])
             else:
-                Click[tmp[2]] = tmp[3]
+                Click[tmp[2]] = int(tmp[3])
 
+    print(Click)
     for key in Click:
         if key in init_feature:
             Item = init_feature[key]
             week_type = process_time(time)
             releasetime_interval = calculate_releasetime_interval(time, Item[7])
             createtime_interval = calculate_createtime_interval(time, Item[1])
-            dataset.append([week_type, createtime_interval, releasetime_interval, Item[2], Item[3], Item[4], Item[8],
+            dataset.append([key, week_type, createtime_interval, releasetime_interval, Item[2], Item[3], Item[4], Item[8],
                            Item[9], Item[10], Click[key]])
 
     print('file ' + str(int(count / 10000)) + ' is processing')
