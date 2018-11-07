@@ -4,8 +4,11 @@
 # program_information中是存储节目详细信息的txt文件，共21个。和IDs中的21个文件相对应
 # program_information_1.0中是存储节目详细信息的txt文件，共21个。该文件夹是program_information文件夹的过滤版本，垃圾节目ID已经被删除掉。
 # feature中是存储节目特征的txt文件，共19个。这19个文件是通过遍历program_information_1.0中的21文件并重新划分得到的
-# 目录结构如下：
+# dataset中是拼接点击量和其他特征之后的文件
+# dataset_2.0中是将每一个特征的list平摊之后的文件，data是x，target是y
 
+
+# 目录结构如下：
 --Migu_PV-Prediction
 ----test.py
 ----es_search.py
@@ -15,3 +18,7 @@
 --program_information
 --program_information_1.0
 --feature
+--dataset
+--dataset_2.0
+----data
+----target
