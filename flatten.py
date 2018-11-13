@@ -10,7 +10,7 @@ import math
 
 
 """
-数据过滤条件
+数据过滤条件，可自定义，只要目标数据在此函数中返回True即可
 """
 def judge(data_feature_list):
     if int(data_feature_list[15]) < 10:
@@ -18,6 +18,9 @@ def judge(data_feature_list):
     return True
 
 
+"""
+pv到类别的对应关系，可自定义
+"""
 def get_class(pv_str):
     pv = int(pv_str)
     if pv < 13:
@@ -38,6 +41,23 @@ def get_class(pv_str):
 
 """
 生成数据x和y
+file_list：要遍历的特征文件的list，可以选取1-21中的任意多个文件
+feature_list：要使用的特征索引的list，特征索引和特征名字的对应关系如下
+0--标题
+1--createtime
+2--displaytype_one_hot
+3--formtype_one_hot
+4--duration
+5--detail
+6--keywords
+7--releasetime
+8--主题_one_hot
+9--program_type_one_hot
+10-演员_one_hot
+11-星期vector
+12-24小时vector
+13-创建时间间隔
+14-上映时间间隔
 """
 def flatten(file_list, feature_list):
     flatten_data = []
