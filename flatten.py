@@ -1,41 +1,74 @@
+# -*- encoding: utf-8 -*-
+"""
+本文件主要有以下几个作用：
+1 从feature_1.0下读取数据，根据要求制作数据集x和y，存放到dataset文件夹下
+"""
+
 import os
 import json
 import math
 
-def flatten():
-    input_path = '../dataset/'
-    data_path = '../dataset_3.0/data/'
-    target_path = '../dataset_3.0/target/'
-    files = os.listdir(input_path)
-    for iter in files:
-        file = os.path.join(input_path, iter)
-        print(file)
-        with open(file, 'r') as fread:
+
+"""
+数据过滤条件
+"""
+def judge(data_feature_list):
+    if int(data_feature_list[15]) < 10:
+        return False
+    return True
+
+
+def get_class(pv_str):
+    pv = int(pv_str)
+    if pv < 13:
+        return 6
+    elif pv < 15:
+        return 5
+    elif pv < 20:
+        return 4
+    elif pv < 30:
+        return 3
+    elif pv < 50:
+        return 0
+    elif pv < 100:
+        return 1
+    else:
+        return 2
+
+
+"""
+生成数据x和y
+"""
+def flatten(file_list, feature_list):
+    flatten_data = []
+    flatten_target = []
+    for index in file_list:
+        print('file ' + str(index) + ' is processing')
+        with open(os.path.join(os.path.abspath('..'), 'feature_1.0', str(index) + '.txt'), 'r', encoding='UTF-8') as fread:
             res = fread.read()
             res = json.loads(res)
-            flatten_data = []
-            flatten_target = []
+            
             for item in res:
-                tmp = item[0]#0-6
-                tmp.extend(item[1])#7-30
-                tmp.append(math.exp(-1*item[2]))#31
-                tmp.append(math.exp(-1*item[3]))#32
-                tmp.extend(item[4])#33-
-                tmp.extend(item[5])#
-                tmp.append(math.exp(-1*int(item[6])))#
-                tmp.extend(item[7])
-                tmp.extend(item[8])
+                if not judge(res[item]):
+                    continue
+                tmp = []
+                for i in feature_list:
+                    if isinstance(res[item][i],list):
+                        tmp.extend(res[item][i])
+                    else:
+                        tmp.append(res[item][i])
                 flatten_data.append(tmp)
-                flatten_target.append(item[10])
+                flatten_target.append(get_class(res[item][15]))
 
-            data_output = os.path.join(data_path, iter)
-            target_output = os.path.join(target_path, iter)
-            with open(data_output, 'w') as fwrite:
-                fwrite.write(json.dumps(flatten_data, ensure_ascii=False))
-            with open(target_output, 'w') as fwrite:
-                fwrite.write(json.dumps(flatten_target, ensure_ascii=False))
+    
+    with open(os.path.join(os.path.abspath('..'), 'dataset', 'data.txt'), 'w', encoding='UTF-8') as fwrite:
+        fwrite.write(json.dumps(flatten_data, ensure_ascii=False))
+    with open(os.path.join(os.path.abspath('..'), 'dataset', 'target.txt'), 'w', encoding='UTF-8') as fwrite:
+        fwrite.write(json.dumps(flatten_target, ensure_ascii=False))
+
+
 
 
 if __name__ == '__main__':
-    flatten()
+    flatten([1],[2,3,4])
 

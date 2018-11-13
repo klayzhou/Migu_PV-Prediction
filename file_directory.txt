@@ -1,24 +1,30 @@
 ﻿# Migu_PV-Prediction存放所有的代码文件，该目录也是github上的项目目录
-# dat中是原始的dat文件，而result.csv文件是dat文件遍历以后得到的合并版
-# IDs中是存储节目ID的txt文件，共21个。这21个文件是通过遍历result.csv文件得到的
-# program_information中是存储节目详细信息的txt文件，共21个。和IDs中的21个文件相对应
-# program_information_1.0中是存储节目详细信息的txt文件，共21个。该文件夹是program_information文件夹的过滤版本，垃圾节目ID已经被删除掉。
-# feature中是存储节目特征的txt文件，共19个。这19个文件是通过遍历program_information_1.0中的21文件并重新划分得到的
-# dataset中是拼接点击量和其他特征之后的文件
-# dataset_2.0中是将每一个特征的list平摊之后的文件，data是x，target是y
+# dat中存放原始的dat文件，result.csv文件是dat文件遍历以后得到的总结版，result_merge.csv文件是result.csv的合并版，comp id不同但是节目id和时间都相同的数据的pv被加到一起
+# IDs中是存储节目ID的txt文件，共21个。这21个文件是通过遍历result_merge.csv文件并且以10000为单位划分节目id得到的
+# dat_1.0中存放result_merge.csv文件分割后的21个文件，这21个文件是和IDs中的21个文件相对应的
+# program_information中是存储节目详细信息的txt文件，共21个。和IDs中的21个文件相对应。但因为有些节目id的是取不到信息的，所以这里的id是IDs中id的子集
+# program_information_1.0中是存储节目详细信息的txt文件，共21个。该文件夹是program_information文件夹的过滤版本，垃圾节目ID及其节目信息已经被删除掉。所以这里的id是program_information中id的子集
+# feature中是存储节目词向量等特征的txt文件，共21个。和program_information_1.0中的21个文件相对应
+# feature_1.0中是将feature下节目词向量等特征和dat_1.0下PV数据拼接之后的txt文件，共21个，和feature中的21个文件相对应。
+# dataset中是做好的数据，可直接用于训练。data.txt是x，target.txt是y
 
 
 # 目录结构如下：
 --Migu_PV-Prediction
-----test.py
-----es_search.py
 ----file_directory.txt
+----es_search.py
+----get_id.py
+----extra_feature.py
+----concate.py
+----flatten.py
+----learn.py
 --dat
 --IDs
+--dat_1.0
 --program_information
 --program_information_1.0
 --feature
+--feature_1.0
 --dataset
---dataset_2.0
-----data
-----target
+----data.txt
+----target.txt

@@ -1,13 +1,23 @@
+# -*- encoding: utf-8 -*-
+"""
+本文件主要有以下几个作用：
+1 遍历dat文件生成result.csv文件
+2 处理result.csv文件生成result_merge.csv文件
+3 根据result_merge.csv文件生成IDs下边的21个txt文件
+4 根据IDs下的21个文件，将result_merge.csv文件进行切分，对应存放到dat_1.0下
+5 遍历IDs下的21个文件，进行es查询，对应存放到program_information下
+6 遍历program_information下的21个文件，过滤掉垃圾ID及其节目信息后，对应存放到program_information_1.0下
+"""
+
 import json
 import os
 import time
 from es_search import es_search
 
+
 """
 记录函数运行的时间
 """
-
-
 def log_time(func):
     def wrapper(*args, **kw):
         start = time.time()
@@ -22,8 +32,6 @@ def log_time(func):
 """
 处理dat文件，生成csv文件，每一行都是"时间|comp id|节目ID|节目PV"的格式
 """
-
-
 def process_dat():
     count = 0
     rootdir = os.path.join(os.path.abspath('..'), 'dat')
@@ -34,9 +42,8 @@ def process_dat():
 
             with open(os.path.join(rootdir, file), 'r', encoding='UTF-8') as fread:
                 for line in fread.readlines():
-                    # print(str(line))
                     temp = line.split('|')
-                    if temp[1] == '' or temp[1] == 'LIST' or temp[5] == '-998' or temp[5] == '':
+                    if temp[1] == '' or temp[1] == 'LIST' or temp[5] == '-998' or temp[5] == '' or (not temp[5].isdigit()):
                         continue
                     fwrite.write(temp[0] + '|' + temp[1] + '|' + temp[5][0:9] + '|' + temp[6] + '\r')
                     fwrite.flush()
@@ -45,37 +52,49 @@ def process_dat():
 
 
 """
+处理result.csv文件，将comp id不同，但是时间和节目id相同的数据合并
+生成的result_merge.csv文件，每一行都是"时间|节目ID|节目PV"的格式
+"""
+def process_csv():
+    rootdir = os.path.join(os.path.abspath('..'), 'dat')
+    dict = {}
+    with open(os.path.join(rootdir, 'result.csv'), 'r', encoding='UTF-8') as fread:
+        for line in fread.readlines():
+            temp = line.split('|')
+            key = temp[0] + '_' + temp[2]
+            if key in dict.keys():
+                dict[key] = dict[key] + int(temp[3])
+            else:
+                dict[key] = int(temp[3])
+
+    with open(os.path.join(rootdir, 'result_merge.csv'), 'w', encoding='UTF-8') as fwrite:
+        for item in dict:
+            temp = item.split('_')
+            fwrite.write(temp[0] + '|' + temp[1] + '|' + str(dict[item]) + '\r')
+
+
+"""
 读取csv文件，生成节目ID的集合
 """
-
-
 def get_IDs():
-    filePath = os.path.join(os.path.abspath('..'), 'dat', 'result.csv')
+    filePath = os.path.join(os.path.abspath('..'), 'dat', 'result_merge.csv')
     count = 0
     Idset = set()
     with open(filePath, 'r', encoding='UTF-8') as fread:
         for line in fread.readlines():
             count = count + 1
             temp = line.split('|')
-            Idset.add(temp[2])
+            Idset.add(temp[1])
             # if len(Idset) >= 25000:
             #    break
     print(str(count) + ' ' + str(len(Idset)))
     return Idset
 
-"""
-读取csv文件，合并不同comp下同一节目的点击量
-"""
-def sumup_vv():
-    filePath = os.path.join(os.path.abspath('..'), 'dat', 'result.csv')
-
-
 
 """
 将节目ID的集合以单位为10000划分到21个txt文件中去
+2.txt文件中有一个‘yes_id’什么的，我给手动删除了，所以2.txt只有9999个ID
 """
-
-
 def write_IDs():
     IDs_dir = os.path.join(os.path.abspath('..'), 'IDs')
     IDs = get_IDs()
@@ -95,6 +114,28 @@ def write_IDs():
 
 
 """
+根据IDs下边的21个文件，将result_merge.csv文件分成21份
+"""
+def split_result_merge_csv():
+    dict = {}
+    with open(os.path.join(os.path.abspath('..'), 'dat', 'result_merge.csv'), 'r', encoding='UTF-8') as fread:
+        for line in fread.readlines():
+            temp = line.split('|')
+            if temp[1] not in dict.keys():
+                dict[temp[1]] = []
+            dict[temp[1]].append(temp[0] + '_' + str(temp[2]))
+    
+    for index in range(1,22):
+        print('file ' + str(index) + ' is processing')
+        with open(os.path.join(os.path.abspath('..'), 'IDs', str(index)+'.txt'), 'r', encoding='UTF-8') as fread, open(os.path.join(os.path.abspath('..'), 'dat_1.0', str(index)+'.txt'), 'w', encoding='UTF-8') as fwrite:
+            for line in fread.readlines():
+                line = line.strip()
+                for item in dict[line]:
+                    temp = item.split('_')
+                    fwrite.write(temp[0] + '|' + line + '|' + temp[1])
+
+
+"""
 读取节目ID的txt文件，通过ES提取节目信息，存储到本地
 但是该函数只是针对某一个txt文件，要处理所有txt文件的话要进行一次遍历
 该函数借助json对list进行存取，读取存储节目信息的txt文件的代码如下
@@ -102,8 +143,6 @@ b = open(r"D:\AllProject\PV\information\1.txt", "r",encoding='UTF-8')
 out = b.read()
 out =  json.loads(out)
 """
-
-
 def read_IDs(num):
     print('file ' + str(num) + ' is processing')
     IDs_dir = os.path.join(os.path.abspath('..'), 'IDs')
@@ -128,38 +167,16 @@ def read_IDs(num):
 
 
 """
-#读取所有的节目ID，通过ES提取节目信息，存储到本地
-#目前该函数未被启用，采用的是上述read_ID函数来进行信息的抓取
-
-def get_information():
-    IDset = get_IDs()
-    count = 0
-    file_index = 0
-    ID_list = []
-    res = []
-    for ID in IDset:
-        count = count + 1
-        ID_list.append(ID)
-        if count%100 == 0 or count==len(IDset):
-            print(str(count) + ' has done')
-            temp = es_search(ID_list)
-            ID_list.clear()
-            res = res + temp
-            if len(res) >= 10000 or count==len(IDset):
-                file_index = file_index + 1
-                res_file = json.dumps(res)
-                print('start writing file:' + str(file_index))
-                with open(os.path.join('D:\AllProject\PV\information',str(file_index)+'.txt'),'w') as fwrite:
-                    fwrite.write(res_file)
-                    fwrite.flush()
-                res.clear()
+读取所有节目的信息
 """
+def read_IDs_all():
+    for i in range(1,22):
+        read_IDs(i)
+
 
 """
-得到所有节目的详细信息
+得到所有节目的详细信息，测试调研用
 """
-
-
 def get_all_information():
     res = {}
     program_information_dir = os.path.join(os.path.abspath('..'), 'feature')
@@ -175,8 +192,6 @@ def get_all_information():
 """
 统计数据信息，测试调研用
 """
-
-
 def statics():
     res = get_all_information()
     print('done')
@@ -229,8 +244,6 @@ def statics():
 """
 过滤垃圾数据，仍存到21个文件里边
 """
-
-
 def get_clean_data():
     count = 0
     program_information_dir = os.path.join(os.path.abspath('..'), 'program_information')
@@ -259,6 +272,13 @@ def get_clean_data():
         print('file ' + str(index) + ' has done')
     print(str(count))
 
+
+
+
 if __name__ == '__main__':
-    get_IDs()
-    #get_all_information()
+    #process_dat()
+    #process_csv()
+    #write_IDs
+    #split_result_merge_csv()
+    #read_IDs_all()
+    #get_clean_data()

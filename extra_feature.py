@@ -1,8 +1,16 @@
+# -*- encoding: utf-8 -*-
+"""
+本文件主要有以下几个作用：
+1 遍历program_information_1.0下的21个文件，提取词向量等特征，对应存放到feature下
+"""
+
 #import jieba
+import os
 import json
 from datetime import datetime as dt
 import collections
 from numpy import *
+
 
 """
 处理content_type字符串
@@ -57,6 +65,7 @@ def process_date(date_str):
         else:
             return '19'+temp[0]+'-01'
 
+
 """
 处理形如“2018100901”的时间字符串，返回时间和星期的one-hot向量
 """
@@ -106,25 +115,17 @@ def calculate_createtime_interval(time_str, createtime_str):
 
 
 '''
-	  节目ID	 标题  创建时间	一级分类编号	一级分类名称	剧集类型	剧集时长	节目介绍	关键词	各大属性！															
-旧版     0	  1	     2	       3	        4	        5	     6	  7	      8	       9													
-新版 	id	标题的分词	createtime	displaytype	      formtype  duration detail	keywords  上映时间	主题	 正片/花絮	演员名	演员id
-														
-'''
-
-'''
 最后版本的feature 
 Key : contentID
 Value: 标题，createtime, displaytype_one_hot, formtype_one_hot, duration, detail, keywords, releasetime, 主题_one_hot, program_type_one_hot, 演员_one_hot
 '''
-
-
 def extra_feature():
-
     program_information_dir = os.path.join(os.path.abspath('..'), 'program_information_1.0')
     feature_dir = os.path.join(os.path.abspath('..'), 'feature')
     actor_lst = []
     feature = []
+    file_count = []
+    file_count_num = -1
 
     program_type_set = set()
     topic_set = set()
@@ -136,6 +137,8 @@ def extra_feature():
         with open(os.path.join(program_information_dir,str(index)+'.txt'),'r',encoding='UTF-8')	as fread:
             res = fread.read()
             res = json.loads(res)
+            file_count_num = file_count_num + len(res)
+            file_count.append(file_count_num)
 
             for item in res:
                 name_list = None
@@ -145,7 +148,7 @@ def extra_feature():
                 peoples = set() # delete the repeated words
                 peoples_ID = set() # delete the repeated words
                 keywords = []
-                name_list = list(jieba.cut(item[1],cut_all = False))
+                #name_list = list(jieba.cut(item[1],cut_all = False))
                 #print(name_list)
                 time_flag = False
 
@@ -188,7 +191,7 @@ def extra_feature():
 
                 actor_lst.extend(list(peoples))
 
-                feature.append([item[0],name_list,item[2],item[3],item[5],item[6],item[7],keywords,release_time,topic,formtype,peoples,peoples_ID])
+                feature.append([item[0],item[1],item[2],item[3],item[5],item[6],item[7],keywords,release_time,topic,formtype,peoples,peoples_ID])
 
                 # form_type one-hot encoder
                 form_type_set.add(item[5])
@@ -229,9 +232,10 @@ def extra_feature():
 
     count = 0
     tmp_feature = {}
-    for item in feature:
+    file_index = 0
+    for index in range(len(feature)):
         # delete the useless actor name and actor id
-        tmp_lst = item[1:3]
+        tmp_lst = feature[index][1:3]
         count = count + 1
         display_vector = zeros(12)
         form_type_vector = zeros(form_type_len)
@@ -239,42 +243,40 @@ def extra_feature():
         programtype_vector = zeros(programtype_len)
         topic_vector = zeros(topic_len)
 
-        if item[3]:
-            if item[3] in display_dict:
-                display_vector[display_dict[item[3]]] =1
+        if feature[index][3]:
+            if feature[index][3] in display_dict:
+                display_vector[display_dict[feature[index][3]]] =1
 
-        if item[4]:
-            form_type_vector[form_type_dict[item[4]]] = 1
+        if feature[index][4]:
+            form_type_vector[form_type_dict[feature[index][4]]] = 1
 
-        for iter in item[11]:
+        for iter in feature[index][11]:
             if iter in invalid_actor:
                 one_hot_actor[invalid_actor[iter]] = 1
 
-        if item[10]:
-            programtype_vector[programtype_dict[item[10]]] = 1
+        if feature[index][10]:
+            programtype_vector[programtype_dict[feature[index][10]]] = 1
 
-        for iter in item[9]:
+        for iter in feature[index][9]:
             topic_vector[topic_dict[iter]] = 1
 
         tmp_lst.append(display_vector.tolist())
         tmp_lst.append(form_type_vector.tolist())
-        tmp_lst.extend(item[5:9])
+        tmp_lst.extend(feature[index][5:9])
         tmp_lst.append(topic_vector.tolist())
         tmp_lst.append(programtype_vector.tolist())
         tmp_lst.append(one_hot_actor.tolist())
-        tmp_feature[item[0]] = tmp_lst
+        tmp_feature[feature[index][0]] = tmp_lst
 
-        if count%10000 == 0:
-            print('file ' + str(int(count / 10000)) + ' is processing')
-            with open(os.path.join(feature_dir, str(int(count / 10000)) + '.txt'), 'w', encoding='UTF-8') as fwrite:
+        if index == file_count[file_index]:
+            print('file ' + str(file_index + 1) + ' is processing')
+            with open(os.path.join(feature_dir, str(file_index + 1) + '.txt'), 'w', encoding='UTF-8') as fwrite:
                 fwrite.write(json.dumps(tmp_feature, ensure_ascii=False))
                 tmp_feature.clear()
+            file_index = file_index + 1
 
-    print('file ' + str(int(1 + count / 10000)) + ' is processing')
-    with open(os.path.join(feature_dir, str(int(1 + count / 10000)) + '.txt'), 'w', encoding='UTF-8') as fwrite:
-        fwrite.write(json.dumps(tmp_feature, ensure_ascii=False))
+
 
 
 if __name__ == '__main__':
     extra_feature()
-    #get_all_information()
