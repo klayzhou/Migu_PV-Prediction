@@ -7,6 +7,7 @@
 from extra_feature import process_time, calculate_releasetime_interval, calculate_createtime_interval
 import os
 import json
+import math
 
 
 """
@@ -40,10 +41,15 @@ def concate_to_feature_1():
             feature_dict = fread_feature.read()
             feature_dict = json.loads(feature_dict)
 
+            previous_click = dict()
+
             for line in fread_data.readlines():
                 tmp = line.strip().split('|')
                 if tmp[1] not in feature_dict:
                     continue
+                if tmp[1] not in previous_click:
+                    previous_click[tmp[1]] = 5
+                previous_click_ID = previous_click[tmp[1]]
                 Item = feature_dict[tmp[1]]
                 weekday_vector,time_vector = process_time(tmp[0])
                 releasetime_interval = calculate_releasetime_interval(tmp[0], Item[7])
@@ -51,12 +57,11 @@ def concate_to_feature_1():
                 key = tmp[0] + '_' + tmp[1]
                 dataset[key] = []
                 dataset[key].extend(Item)
-                dataset[key].extend([weekday_vector, time_vector, createtime_interval, releasetime_interval, tmp[2]])
+                dataset[key].extend([weekday_vector, time_vector, (createtime_interval),(releasetime_interval), previous_click_ID, tmp[2]])
+                previous_click[tmp[1]] = tmp[2]
             
             fwrite.write(json.dumps(dataset, ensure_ascii=False))
             dataset.clear()
-
-
 
 
 if __name__ == '__main__':

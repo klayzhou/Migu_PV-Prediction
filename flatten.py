@@ -23,20 +23,17 @@ pv到类别的对应关系，可自定义
 """
 def get_class(pv_str):
     pv = int(pv_str)
-    if pv < 13:
-        return 6
-    elif pv < 15:
-        return 5
-    elif pv < 20:
-        return 4
-    elif pv < 30:
-        return 3
-    elif pv < 50:
+    
+    if pv<20:
         return 0
-    elif pv < 100:
+    elif pv < 40:
         return 1
-    else:
+    elif pv < 200:
         return 2
+    elif pv < 1000:
+        return 3
+    else:
+        return 4
 
 
 """
@@ -72,23 +69,32 @@ def flatten(file_list, feature_list):
                 if not judge(res[item]):
                     continue
                 tmp = []
+                #if index == 13 or index == 14:
+                #    res[item][i]=math.exp(res[item][i])
                 for i in feature_list:
+                    if i==10:
+                        res[item][i] = res[item][i][0:300]
+                    if i==13 or i==14:
+                        print(res[item][i])
+                        res[item][i] = math.exp(-1*res[item][i])
                     if isinstance(res[item][i],list):
                         tmp.extend(res[item][i])
                     else:
                         tmp.append(res[item][i])
                 flatten_data.append(tmp)
-                flatten_target.append(get_class(res[item][15]))
+                flatten_target.append(get_class(res[item][16]))
 
     
     with open(os.path.join(os.path.abspath('..'), 'dataset', 'data.txt'), 'w', encoding='UTF-8') as fwrite:
         fwrite.write(json.dumps(flatten_data, ensure_ascii=False))
     with open(os.path.join(os.path.abspath('..'), 'dataset', 'target.txt'), 'w', encoding='UTF-8') as fwrite:
+        
         fwrite.write(json.dumps(flatten_target, ensure_ascii=False))
 
 
 
 
 if __name__ == '__main__':
-    flatten([1],[2,3,4])
+    flatten([1,2,3,4,5],[2,3,4,8,9,10,11,12,13,14,15])
+
 
