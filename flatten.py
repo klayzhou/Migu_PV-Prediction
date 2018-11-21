@@ -68,15 +68,23 @@ def flatten(file_list, feature_list):
                 if not judge(res[item]):
                     continue
                 tmp = []
+                #if index == 13 or index == 14:
+                #    res[item][i]=math.exp(res[item][i])
                 for i in feature_list:
                     if i==10:
                         res[item][i] = res[item][i][0:300]
+
+                    if i==13 or i==14:
+                        print(res[item][i])
+                        res[item][i] = math.exp(-1*res[item][i])
                     if isinstance(res[item][i],list):
                         tmp.extend(res[item][i])
                     else:
                         tmp.append(res[item][i])
                 flatten_data.append(tmp)
-                flatten_target.append(get_class(res[item][14]))
+
+                flatten_target.append(get_class(res[item][16]))
+
 
     
     with open(os.path.join(os.path.abspath('..'), 'dataset', 'data.txt'), 'w', encoding='UTF-8') as fwrite:
@@ -89,6 +97,8 @@ def flatten(file_list, feature_list):
 
 
 if __name__ == '__main__':
-    flatten([1,2,3,4,5,6,7,8,9,10],[2,3,4,8,9,10,11,12,13])
+
+    flatten([1,2,3,4,5],[2,3,4,8,9,10,11,12,13,14,15])
+
 
 
