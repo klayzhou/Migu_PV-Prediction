@@ -13,7 +13,7 @@ import math
 数据过滤条件，可自定义，只要目标数据在此函数中返回True即可
 """
 def judge(data_feature_list):
-    if int(data_feature_list[15]) < 10:
+    if int(data_feature_list[14]) < 10:
         return False
     return True
 
@@ -23,20 +23,17 @@ pv到类别的对应关系，可自定义
 """
 def get_class(pv_str):
     pv = int(pv_str)
-    if pv < 13:
-        return 6
-    elif pv < 15:
-        return 5
-    elif pv < 20:
-        return 4
-    elif pv < 30:
-        return 3
-    elif pv < 50:
+    
+    if pv<20:
         return 0
-    elif pv < 100:
+    elif pv < 40:
         return 1
-    else:
+    elif pv < 200:
         return 2
+    elif pv < 1000:
+        return 3
+    else:
+        return 4
 
 
 """
@@ -55,9 +52,8 @@ feature_list：要使用的特征索引的list，特征索引和特征名字的�
 9--program_type_one_hot
 10-演员_one_hot
 11-星期vector
-12-24小时vector
-13-创建时间间隔
-14-上映时间间隔
+12-创建时间间隔
+13-上映时间间隔
 """
 def flatten(file_list, feature_list):
     flatten_data = []
@@ -73,22 +69,26 @@ def flatten(file_list, feature_list):
                     continue
                 tmp = []
                 for i in feature_list:
+                    if i==10:
+                        res[item][i] = res[item][i][0:300]
                     if isinstance(res[item][i],list):
                         tmp.extend(res[item][i])
                     else:
                         tmp.append(res[item][i])
                 flatten_data.append(tmp)
-                flatten_target.append(get_class(res[item][15]))
+                flatten_target.append(get_class(res[item][14]))
 
     
     with open(os.path.join(os.path.abspath('..'), 'dataset', 'data.txt'), 'w', encoding='UTF-8') as fwrite:
         fwrite.write(json.dumps(flatten_data, ensure_ascii=False))
     with open(os.path.join(os.path.abspath('..'), 'dataset', 'target.txt'), 'w', encoding='UTF-8') as fwrite:
+        
         fwrite.write(json.dumps(flatten_target, ensure_ascii=False))
 
 
 
 
 if __name__ == '__main__':
-    flatten([1],[2,3,4])
+    flatten([1,2,3,4,5,6,7,8,9,10],[2,3,4,8,9,10,11,12,13])
+
 

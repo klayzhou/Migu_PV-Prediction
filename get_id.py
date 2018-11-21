@@ -43,7 +43,7 @@ def process_dat():
             with open(os.path.join(rootdir, file), 'r', encoding='UTF-8') as fread:
                 for line in fread.readlines():
                     temp = line.split('|')
-                    if temp[1] == '' or temp[1] == 'LIST' or temp[5] == '-998' or temp[5] == '' or (not temp[5].isdigit()):
+                    if temp[1] == '' or temp[1] == 'LIST' or temp[1] == 'ITEM' or temp[5] == '-998' or temp[5] == '' or (not temp[5].isdigit()):
                         continue
                     fwrite.write(temp[0] + '|' + temp[1] + '|' + temp[5][0:9] + '|' + temp[6] + '\r')
                     fwrite.flush()
@@ -68,6 +68,28 @@ def process_csv():
                 dict[key] = int(temp[3])
 
     with open(os.path.join(rootdir, 'result_merge.csv'), 'w', encoding='UTF-8') as fwrite:
+        for item in dict:
+            temp = item.split('_')
+            fwrite.write(temp[0] + '|' + temp[1] + '|' + str(dict[item]) + '\r')
+
+
+"""
+"""
+def process_result_merge_csv(start_time,end_time):
+    rootdir = os.path.join(os.path.abspath('..'), 'dat')
+    dict = {}
+    with open(os.path.join(rootdir, 'result_merge.csv'), 'r', encoding='UTF-8') as fread:
+        for line in fread.readlines():
+            temp = line.split('|')
+            key = temp[0][0:8] + '_' + temp[1]
+            if int(temp[0][8:]) < start_time or int(temp[0][8:]) >= end_time:
+                continue
+            if key in dict.keys():
+                dict[key] = dict[key] + int(temp[2])
+            else:
+                dict[key] = int(temp[2])
+
+    with open(os.path.join(rootdir, 'result_merge_' +  str(start_time) + '-' + str(end_time) + '.csv'), 'w', encoding='UTF-8') as fwrite:
         for item in dict:
             temp = item.split('_')
             fwrite.write(temp[0] + '|' + temp[1] + '|' + str(dict[item]) + '\r')
@@ -130,6 +152,30 @@ def split_result_merge_csv():
         with open(os.path.join(os.path.abspath('..'), 'IDs', str(index)+'.txt'), 'r', encoding='UTF-8') as fread, open(os.path.join(os.path.abspath('..'), 'dat_1.0', str(index)+'.txt'), 'w', encoding='UTF-8') as fwrite:
             for line in fread.readlines():
                 line = line.strip()
+                for item in dict[line]:
+                    temp = item.split('_')
+                    fwrite.write(temp[0] + '|' + line + '|' + temp[1])
+
+
+"""
+根据IDs下边的21个文件，将result_merge_17-23.csv文件分成21份
+"""
+def split_result_merge_17_23_csv():
+    dict = {}
+    with open(os.path.join(os.path.abspath('..'), 'dat', 'result_merge_17-23.csv'), 'r', encoding='UTF-8') as fread:
+        for line in fread.readlines():
+            temp = line.split('|')
+            if temp[1] not in dict.keys():
+                dict[temp[1]] = []
+            dict[temp[1]].append(temp[0] + '_' + str(temp[2]))
+    
+    for index in range(1,22):
+        print('file ' + str(index) + ' is processing')
+        with open(os.path.join(os.path.abspath('..'), 'IDs', str(index)+'.txt'), 'r', encoding='UTF-8') as fread, open(os.path.join(os.path.abspath('..'), 'dat_2.0', str(index)+'.txt'), 'w', encoding='UTF-8') as fwrite:
+            for line in fread.readlines():
+                line = line.strip()
+                if line not in dict.keys():
+                    continue
                 for item in dict[line]:
                     temp = item.split('_')
                     fwrite.write(temp[0] + '|' + line + '|' + temp[1])
