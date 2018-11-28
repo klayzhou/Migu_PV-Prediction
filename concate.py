@@ -16,7 +16,7 @@ from flatten import get_class
 将特征和数据进行拼接，feature_1.0中的格式如下
 Key:
     time_contentID
-Value(16):
+Value(15):
     标题
     createtime
     displaytype_one_hot
@@ -29,7 +29,6 @@ Value(16):
     program_type_one_hot
     演员_one_hot
     星期vector
-    24小时vector
     创建时间间隔
     上映时间间隔
     PV值
@@ -68,7 +67,7 @@ def concate_to_feature_1():
                     dataset[key] = []
                     dataset[key].extend(Item)
                     dataset[key].extend([weekday_vector, time_vector, createtime_interval, releasetime_interval, previous_click[tmp[1]], tmp[2]])
-                
+
                 previous_click[tmp[1]] = tmp[2]
 
             fwrite_complete.write(json.dumps(dataset, ensure_ascii=False))

@@ -73,13 +73,14 @@ def process_time(time_str):
     year = int(time_str[0:4])
     month = int(time_str[4:6])
     day = int(time_str[6:8])
-    time_id = int(time_str[8:])
+    #time_id = int(time_str[8:])
     weekday_id = dt(year,month,day).weekday()
     weekday_vector = zeros(7)
     weekday_vector[weekday_id] = 1
-    time_vector = zeros(24)
-    time_vector[time_id] = 1
-    return weekday_vector.tolist(), time_vector.tolist()
+    #time_vector = zeros(24)
+    #time_vector[time_id] = 1
+    #return weekday_vector.tolist(), time_vector.tolist()
+    return weekday_vector.tolist()
     
 
 

@@ -14,10 +14,12 @@ from sklearn.linear_model import LinearRegression, Lasso, LogisticRegression
 from sklearn.metrics import mean_squared_error, classification_report, precision_recall_fscore_support
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
+
 from imblearn.over_sampling import RandomOverSampler, SMOTE 
 from imblearn.under_sampling import RandomUnderSampler
 from imblearn.ensemble import BalancedBaggingClassifier, BalancedRandomForestClassifier
 from tensorflow import keras
+
 
 """
 获取数据x和y
@@ -51,7 +53,9 @@ def get_data():
     train_data,test_data,train_target,test_target = train_test_split(data,target,test_size=0.3,random_state=1)
     count = Counter(train_target)
     print(count)
+
     return test_data, test_target, train_data, train_target
+
 
 """
 逻辑斯蒂分类
@@ -60,9 +64,13 @@ def Logistic_Regression():
     test_data, test_target, train_data, train_target = get_data()
     model_LogisticRegression = LogisticRegression()
     model_LogisticRegression.fit(train_data,train_target)
+
     print(model_LogisticRegression.coef_)
+
     predicted_target = model_LogisticRegression.predict(test_data)
     print(classification_report(test_target, predicted_target)) 
+
+
 
 
 def RFC():
@@ -71,6 +79,7 @@ def RFC():
     model_rfc.fit(train_data, train_target)
     predicted_target = model_rfc.predict(test_data)
     print(classification_report(test_target,predicted_target))
+
 
 def nn():
     test_data, test_target, train_data, train_target = get_data()
@@ -87,6 +96,7 @@ def nn():
     #label = numpy.where(proba=predicted)
     print(classification_report(test_target, proba))
     #print(proba)
+
 
 if __name__ == '__main__':
     RFC()
