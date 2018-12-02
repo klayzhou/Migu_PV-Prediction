@@ -13,7 +13,7 @@ import math
 数据过滤条件，可自定义，只要目标数据在此函数中返回True即可
 """
 def judge(data_feature_list):
-    if int(data_feature_list[14]) < 10:
+    if data_feature_list[15] == -1 or int(data_feature_list[16]) < 10:
         return False
     return True
 
@@ -39,7 +39,7 @@ def get_class(pv_str):
 """
 生成数据x和y
 file_list：要遍历的特征文件的list，可以选取1-21中的任意多个文件
-feature_list：要使用的特征索引的list，特征索引和特征名字的对应关系如下
+feature_list：要使用的特征索引的list，一共16个特征，特征索引和特征名字的对应关系如下
 0--标题
 1--createtime
 2--displaytype_one_hot
@@ -52,8 +52,11 @@ feature_list：要使用的特征索引的list，特征索引和特征名字的�
 9--program_type_one_hot
 10-演员_one_hot
 11-星期vector
-12-创建时间间隔
-13-上映时间间隔
+12-时间vector
+13-创建时间间隔
+14-上映时间间隔
+15-历史pv
+16-pv
 """
 def flatten(file_list, feature_list):
     flatten_data = []
@@ -68,15 +71,16 @@ def flatten(file_list, feature_list):
                 if not judge(res[item]):
                     continue
                 tmp = []
-                #if index == 13 or index == 14:
-                #    res[item][i]=math.exp(res[item][i])
                 for i in feature_list:
                     if i==10:
                         res[item][i] = res[item][i][0:300]
 
-                    if i==13 or i==14:
-                        print(res[item][i])
-                        res[item][i] = math.exp(-1*res[item][i])
+                    #if i==13 or i==14:
+                    #    res[item][i] = math.exp(-1*res[item][i])
+
+                    #if i==15:
+                    #    res[item][i] = res[item][i][-1:]
+
                     if isinstance(res[item][i],list):
                         tmp.extend(res[item][i])
                     else:
@@ -98,7 +102,8 @@ def flatten(file_list, feature_list):
 
 if __name__ == '__main__':
 
-    flatten([1,2,3,4,5],[2,3,4,8,9,10,11,12,13,14,15])
+    #flatten([1,2],[2,3,4,8,9,10,11,12,15])
+    flatten([1,2,3,4],[12,15])
 
 
 

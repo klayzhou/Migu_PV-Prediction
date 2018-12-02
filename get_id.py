@@ -73,7 +73,7 @@ def process_csv():
             fwrite.write(temp[0] + '|' + temp[1] + '|' + str(dict[item]) + '\r')
 
 
-"""
+
 """
 def process_result_merge_csv(start_time,end_time):
     rootdir = os.path.join(os.path.abspath('..'), 'dat')
@@ -93,6 +93,7 @@ def process_result_merge_csv(start_time,end_time):
         for item in dict:
             temp = item.split('_')
             fwrite.write(temp[0] + '|' + temp[1] + '|' + str(dict[item]) + '\r')
+"""
 
 
 """
@@ -158,8 +159,6 @@ def split_result_merge_csv():
 
 
 """
-根据IDs下边的21个文件，将result_merge_17-23.csv文件分成21份
-"""
 def split_result_merge_17_23_csv():
     dict = {}
     with open(os.path.join(os.path.abspath('..'), 'dat', 'result_merge_17-23.csv'), 'r', encoding='UTF-8') as fread:
@@ -179,13 +178,14 @@ def split_result_merge_17_23_csv():
                 for item in dict[line]:
                     temp = item.split('_')
                     fwrite.write(temp[0] + '|' + line + '|' + temp[1])
+"""
 
 
 """
 读取节目ID的txt文件，通过ES提取节目信息，存储到本地
 但是该函数只是针对某一个txt文件，要处理所有txt文件的话要进行一次遍历
 该函数借助json对list进行存取，读取存储节目信息的txt文件的代码如下
-b = open(r"D:\AllProject\PV\information\1.txt", "r",encoding='UTF-8')
+b = open(r"1.txt", "r",encoding='UTF-8')
 out = b.read()
 out =  json.loads(out)
 """
