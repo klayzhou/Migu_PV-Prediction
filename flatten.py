@@ -7,13 +7,16 @@
 import os
 import json
 import math
-
+import numpy
+from sklearn.externals import joblib
 
 """
 数据过滤条件，可自定义，只要目标数据在此函数中返回True即可
 """
-def judge(data_feature_list):
-    if data_feature_list[15] == -1 or int(data_feature_list[16]) < 10:
+
+
+def judge(PV):
+    if int(PV) < 10:
         return False
     return True
 
@@ -68,18 +71,16 @@ def flatten(file_list, feature_list):
             res = json.loads(res)
             
             for item in res:
-                if not judge(res[item]):
+                if not judge(res[item][16]):
                     continue
                 tmp = []
                 for i in feature_list:
                     if i==10:
                         res[item][i] = res[item][i][0:300]
 
-                    #if i==13 or i==14:
-                    #    res[item][i] = math.exp(-1*res[item][i])
 
-                    #if i==15:
-                    #    res[item][i] = res[item][i][-1:]
+                    if i==13 or i==14:
+                        res[item][i] = math.exp(-1*res[item][i])
 
                     if isinstance(res[item][i],list):
                         tmp.extend(res[item][i])
@@ -94,16 +95,69 @@ def flatten(file_list, feature_list):
     with open(os.path.join(os.path.abspath('..'), 'dataset', 'data.txt'), 'w', encoding='UTF-8') as fwrite:
         fwrite.write(json.dumps(flatten_data, ensure_ascii=False))
     with open(os.path.join(os.path.abspath('..'), 'dataset', 'target.txt'), 'w', encoding='UTF-8') as fwrite:
-        
         fwrite.write(json.dumps(flatten_target, ensure_ascii=False))
 
+def flatten_incomplete(file_list, feature_list):
+    incomplete_data = []
+    incomplete_target = []
+    for index in file_list:
+        print('file ' + str(index) + ' is processing')
+        with open(os.path.join(os.path.abspath('..'), 'knn_feature', str(index) + '.txt'), 'r',
+                  encoding='UTF-8') as fread:
+            res = fread.read()
+            res = json.loads(res)
 
+            for item in res:
+                if not judge(res[item][15]):
+                    continue
+                tmp = []
+                for i in feature_list:
+                    if i == 10:
+                        res[item][i] = res[item][i][0:300]
+                    if i == 13 or i == 14:
+                        res[item][i] = math.exp(-1 * res[item][i])
+                    if isinstance(res[item][i], list):
+                        tmp.extend(res[item][i])
+                    else:
+                        tmp.append(res[item][i])
+                incomplete_data.append(tmp)
+                incomplete_target.append(get_class(res[item][15]))
+
+    data = numpy.array(incomplete_data, dtype='float64')
+    data_max = numpy.max(data,axis=0)#axis=0 -> max value of each column
+    data_max[data_max==0]=1
+    data_min = numpy.min(data,axis=0)
+    data = (data - data_min)/(data_max - data_min)
+    data = numpy.nan_to_num(data)
+
+    save_path_name = '../feature_1.0/' + 'Linear_model.m'
+    model = joblib.load(save_path_name)
+
+    predicted = model.predict(data)
+
+    data = data.tolist()
+
+    complete_data = []
+    count = 0
+    for item in data:
+        tmp = item
+        tmp.append(predicted[count])
+        count = count + 1
+        complete_data.append(tmp)
+
+    with open(os.path.join(os.path.abspath('..'), 'dataset', 'data_waiting.txt'), 'w', encoding='UTF-8') as fwrite:
+        fwrite.write(json.dumps(complete_data, ensure_ascii=False))
+
+    with open(os.path.join(os.path.abspath('..'), 'dataset', 'target_waiting.txt'), 'w', encoding='UTF-8') as fwrite:
+        fwrite.write(json.dumps(incomplete_target, ensure_ascii=False))
 
 
 if __name__ == '__main__':
 
-    #flatten([1,2],[2,3,4,8,9,10,11,12,15])
-    flatten([1,2,3,4],[12,15])
+
+    flatten([1,2,3,4,5],[2,3,4,8,9,10,11,12,13,14,15])
+    flatten_incomplete([1,2,3,4,5],[2,3,4,8,9,10,11,12,13,14])
+
 
 
 
