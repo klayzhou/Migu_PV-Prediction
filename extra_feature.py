@@ -280,15 +280,15 @@ Value: createtime, displaytype, formtype, duration, releasetime, 主题_one_hot,
 def extra_feature_optimization():
     program_information_dir = os.path.join(os.path.abspath('..'), 'program_information_1.0')
     feature_dir = os.path.join(os.path.abspath('..'), 'feature')
-    actor_lst = []
     feature = []
+
     file_count = []
     file_count_num = -1
 
     program_type_set = set()
     topic_set = set()
     form_type_set = set()
-
+    actor_lst = []
 
     for index in range(1,22):
         print('file ' + str(index) + ' is processing')
@@ -299,13 +299,14 @@ def extra_feature_optimization():
             file_count.append(file_count_num)
 
             for item in res:
-                name_list = None
                 release_time = ''
                 topic = []
-                formtype = ''
+                programtype = ''
                 peoples = set() # delete the repeated words
                 peoples_ID = set() # delete the repeated words
                 keywords = []
+
+                # name_list = None
                 #name_list = list(jieba.cut(item[1],cut_all = False))
                 #print(name_list)
                 time_flag = False
@@ -325,17 +326,14 @@ def extra_feature_optimization():
                                 time_flag = True
 
                         elif iter['propertyKey'] in ['内容形态','节目形态']:
-                            formtype = iter['propertyValue']
-                            if formtype:
-                                program_type_set.add(formtype)
+                            programtype = iter['propertyValue']
+                            if programtype:
+                                program_type_set.add(programtype)
 
                         elif iter['propertyKey'] in ['内容类型','内容分类','主题','描述年代']:
                             temp = process_content_type(iter['propertyValue'])
                             if not temp:
                                 pass
-                            elif len(temp) == 1:
-                                topic.append(temp[0])
-                                topic_set.add(temp[0])
                             else:
                                 for j in temp:
                                     topic.append(j)
@@ -348,16 +346,17 @@ def extra_feature_optimization():
                 #print(peoples_ID)
 
                 actor_lst.extend(list(peoples))
-
-                feature.append([item[0],item[1],item[2],item[3],item[5],item[6],item[7],keywords,release_time,topic,formtype,peoples,peoples_ID])
-
                 # form_type one-hot encoder
                 form_type_set.add(item[5])
+
+                feature.append([item[0],item[1],item[2],item[3],item[5],item[6],item[7],keywords,release_time,topic,programtype,peoples,peoples_ID])
+
+# ID, name, createtime, displaytime, formtype, cduration, detail, keywords, release_time, topic, programtype, peoples, peoplesID
 
     # find the top 2000 actors
     counter = collections.Counter(actor_lst)
     sorted_actor = sorted(counter.items(), key= lambda x:x[1], reverse=True)
-    invalid_actor = dict(sorted_actor[:2000])
+    invalid_actor = dict(sorted_actor[:300])
 
     # one-hot encoding for actor id
     num = 0
@@ -365,19 +364,15 @@ def extra_feature_optimization():
         invalid_actor[item] = num
         num = num + 1
 
-
-
     display_dict = {'1000':0,'1001':1,'1002':2,'1003':3,'1004':4,'1005':5,'1006':6,'1007':7,'1008':8,'1009':9,'1010':10,'1011':11}
 
     num = 0
     form_type_dict = {}
-    form_type_len = len(form_type_set)
     for i in form_type_set:
         form_type_dict[i] = num
         num = num + 1
 
     programtype_dict = {}
-    programtype_len = len(program_type_set)
     num=0
     for i in program_type_set:
         programtype_dict[i] = num
@@ -423,7 +418,7 @@ def extra_feature_optimization():
 
         #最终特征
         tmp_lst = []
-        tmp_lst.append(feature[index][2])
+        tmp_lst.append(feature[index][2])#
         tmp_lst.append(display_num)
         tmp_lst.append(form_type_num)
         tmp_lst.append(feature[index][5])

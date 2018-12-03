@@ -178,30 +178,6 @@ def get_history_pv_data():
                 
                 previous_pv[tmp[1]] = [int(tmp[0]),int(tmp[2])]
 
-
-"""
-def split_result_merge_17_23_csv():
-    dict = {}
-    with open(os.path.join(os.path.abspath('..'), 'dat', 'result_merge_17-23.csv'), 'r', encoding='UTF-8') as fread:
-        for line in fread.readlines():
-            temp = line.split('|')
-            if temp[1] not in dict.keys():
-                dict[temp[1]] = []
-            dict[temp[1]].append(temp[0] + '_' + str(temp[2]))
-    
-    for index in range(1,22):
-        print('file ' + str(index) + ' is processing')
-        with open(os.path.join(os.path.abspath('..'), 'IDs', str(index)+'.txt'), 'r', encoding='UTF-8') as fread, open(os.path.join(os.path.abspath('..'), 'dat_2.0', str(index)+'.txt'), 'w', encoding='UTF-8') as fwrite:
-            for line in fread.readlines():
-                line = line.strip()
-                if line not in dict.keys():
-                    continue
-                for item in dict[line]:
-                    temp = item.split('_')
-                    fwrite.write(temp[0] + '|' + line + '|' + temp[1])
-"""
-
-
 """
 读取节目ID的txt文件，通过ES提取节目信息，存储到本地
 但是该函数只是针对某一个txt文件，要处理所有txt文件的话要进行一次遍历
@@ -254,6 +230,7 @@ def get_clean_data():
             res = fread.read()
             res = json.loads(res)
             for i in range(len(res) - 1, -1, -1):
+                # res[i][6] cduration; res[i][3] displaytype; res[i][8] keywords; res[i][9] property; res[i][7] detail
                 if int(res[i][6]) == 0 or int(res[i][3]) == 0 or (not res[i][8]) or isinstance(res[i][9], dict) or \
                         res[i][7] == '':
                     res.remove(res[i])
@@ -272,73 +249,6 @@ def get_clean_data():
                 fwrite.flush()
         print('file ' + str(index) + ' has done')
     print(str(count))
-
-
-"""
-#得到所有节目的详细信息，测试调研用
-
-def get_all_information():
-    res = {}
-    program_information_dir = os.path.join(os.path.abspath('..'), 'feature')
-    for index in range(1,11):
-        print('file ' + str(index) + ' is being reading')
-        with open(os.path.join(program_information_dir, str(index) + '.txt'), 'r', encoding='UTF-8') as fread:
-            out = fread.read()
-            out = json.loads(out)
-            res.update(out)
-    return res
-
-
-#统计数据信息，测试调研用
-def statics():
-    res = get_all_information()
-    print('done')
-    count_1000 = 0
-    count_1001 = 0
-    count_1000_yes = 0
-    count_1001_6 = 0
-    count_1001_7 = 0
-    count_1001_6_yes = 0
-    count_1001_7_yes = 0
-    for i in res:
-        if i[3] == '1000':
-            count_1000 = count_1000 + 1
-            if not i[9] or isinstance(i[9], dict):
-                continue
-            for j in i[9]:
-                if j['propertyKey'] == '主演':
-                    count_1000_yes = count_1000_yes + 1
-                    break
-        elif i[3] == '1001':
-            count_1001 = count_1001 + 1
-            if int(i[5]) == 6:
-                count_1001_6 = count_1001_6 + 1
-                if not i[9] or isinstance(i[9], dict):
-                    continue
-                flag = False
-                for j in i[9]:
-                    if j['propertyKey'] == '主演':
-                        flag = True
-                        count_1001_6_yes = count_1001_6_yes + 1
-                        break
-                # if flag == False:
-                #    print(i[0])
-            elif int(i[5]) == 7:
-                count_1001_7 = count_1001_7 + 1
-                if not i[9] or isinstance(i[9], dict):
-                    continue
-                flag = False
-                for j in i[9]:
-                    if j['propertyKey'] == '主演':
-                        flag = True
-                        count_1001_7_yes = count_1001_7_yes + 1
-                        break
-                if flag == False:
-                    print(i[0])
-    print(str(count_1000) + ' ' + str(count_1000_yes) + ' ' + str(count_1001) + ' ' + str(count_1001_6) + ' ' + str(
-        count_1001_6_yes) + ' ' + str(count_1001_7) + ' ' + str(count_1001_7_yes))
-"""
-
 
 
 

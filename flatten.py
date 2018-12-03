@@ -81,7 +81,7 @@ def flatten(file_list):
                 flatten_data.append(tmp)
                 flatten_target.append(int(res[item][12]))
                    
-    target = list(flatten_target)
+    '''target = list(flatten_target)
     target.sort(reverse=True)
     level1 = int(len(target)*0.001)
     level2 = int(len(target)*0.003)
@@ -99,7 +99,7 @@ def flatten(file_list):
         elif flatten_target[i] < target[level1]:
             flatten_target[i] = 3
         else:
-            flatten_target[i] = 4
+            flatten_target[i] = 4'''
     
     print(count)
     with open(os.path.join(os.path.abspath('..'), 'dataset', 'data.txt'), 'w', encoding='UTF-8') as fwrite:
