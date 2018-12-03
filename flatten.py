@@ -13,13 +13,6 @@ from sklearn.externals import joblib
 """
 数据过滤条件，可自定义，只要目标数据在此函数中返回True即可
 """
-
-def judge(PV):
-    if int(PV) < 10:
-        return False
-    return True
-
-
 """
 pv到类别的对应关系，可自定义
 """
@@ -67,8 +60,6 @@ def flatten(file_list, feature_list):
             res = json.loads(res)
             
             for item in res:
-                if not judge(res[item][16]):
-                    continue
                 tmp = []
                 for i in feature_list:
                     if i==10:
@@ -81,10 +72,9 @@ def flatten(file_list, feature_list):
                     else:
                         tmp.append(res[item][i])
                 flatten_data.append(tmp)
-
                 flatten_target.append(get_class(res[item][16]))
 
-
+    print(len(flatten_data))
     
     with open(os.path.join(os.path.abspath('..'), 'dataset', 'data.txt'), 'w', encoding='UTF-8') as fwrite:
         fwrite.write(json.dumps(flatten_data, ensure_ascii=False))
@@ -102,8 +92,6 @@ def flatten_incomplete(file_list, feature_list):
             res = json.loads(res)
 
             for item in res:
-                if not judge(res[item][15]):
-                    continue
                 tmp = []
                 for i in feature_list:
                     if i == 10:
@@ -124,7 +112,7 @@ def flatten_incomplete(file_list, feature_list):
     data = (data - data_min)/(data_max - data_min)
     data = numpy.nan_to_num(data)
 
-    save_path_name = '../feature_1.0/' + 'Linear_model.m'
+    save_path_name = '../feature_1.0/' + 'KNN_model.m'
     model = joblib.load(save_path_name)
 
     predicted = model.predict(data)
@@ -139,6 +127,8 @@ def flatten_incomplete(file_list, feature_list):
         count = count + 1
         complete_data.append(tmp)
 
+    print(len(complete_data))
+
     with open(os.path.join(os.path.abspath('..'), 'dataset', 'data_waiting.txt'), 'w', encoding='UTF-8') as fwrite:
         fwrite.write(json.dumps(complete_data, ensure_ascii=False))
 
@@ -148,8 +138,8 @@ def flatten_incomplete(file_list, feature_list):
 
 if __name__ == '__main__':
 
-    flatten([1,2,3,4,5],[2,3,4,8,9,10,11,12,13,14,15])
-    flatten_incomplete([1,2,3,4,5],[2,3,4,8,9,10,11,12,13,14])
+    flatten([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21],[3,4,8,9,10,11,12,13,14,15])
+    flatten_incomplete([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21],[3,4,8,9,10,11,12,13,14])
 
 
 

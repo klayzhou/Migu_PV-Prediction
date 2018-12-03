@@ -148,9 +148,6 @@ def extra_feature():
                 formtype = ''
                 peoples = set() # delete the repeated words
                 peoples_ID = set() # delete the repeated words
-                keywords = []
-                #name_list = list(jieba.cut(item[1],cut_all = False))
-                #print(name_list)
                 time_flag = False
 
                 if item[9] and isinstance(item[9],list):

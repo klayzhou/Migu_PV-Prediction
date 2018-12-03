@@ -212,8 +212,8 @@ def read_IDs(num):
             fwrite.flush()
 
 
-"""
-读取所有节目的信息
+"""读取所有节目的信息
+
 """
 def read_IDs_all():
     for i in range(1,22):
