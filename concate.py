@@ -14,17 +14,9 @@ import numpy
 将特征和数据进行拼接，feature_1.0中的格式如下
 Key:
     time_contentID
-<<<<<<< HEAD
-Value(15):
-    标题 #0
-    createtime #1
-    displaytype_one_hot #2
-    formtype_one_hot
-=======
 Value(13):
     displaytype
     formtype
->>>>>>> 85c3111f0a079b477f9b366fc99813dd566d7389
     duration
     主题_one_hot
     program_type

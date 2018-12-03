@@ -71,7 +71,7 @@ def flatten(file_list, feature_list):
 
     data = numpy.array(flatten_data, dtype = 'float64')
     target = numpy.array(flatten_target, dtype='int')
-
+    print(data.shape)
     data_max = numpy.max(data,axis=0)#axis=0 -> max value of each column
     data_max[data_max==0]=1
     data_min = numpy.min(data,axis=0)
@@ -90,7 +90,7 @@ def KNN(data, target):
     return regressor
 
 def save_model(input):
-     data, target = flatten([1,2,3,4,5],[2,3,4,8,9,10,11,12,13,14])
+     data, target = flatten([1,2,3,4,5],[3,4,8,9,10,11,12,13,14])
      save_path_name = '../feature_1.0/' + input + '_model.m'
      if 'Linear' in input:
          model = Linear_Regression(data, target)
@@ -101,7 +101,7 @@ def save_model(input):
 
 
 if __name__ == '__main__':
-    input = 'Linear'
+    input = 'KNN'
     save_model(input)
 
 

@@ -46,8 +46,6 @@ def es_search_full(list):
         if response.status==200:
             print('Status:',response.status,response.reason)
             data = json.loads(response.read())
-            #print(data['responses'])
-            #f.write(response.read().decode('utf-8'))
             f.write(str(data['responses']))
         else:
             raise Exception
