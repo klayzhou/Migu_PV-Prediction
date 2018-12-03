@@ -8,6 +8,7 @@ import os
 import json
 import math
 import numpy
+import imp
 from sklearn.externals import joblib
 
 """
@@ -23,15 +24,16 @@ def judge(PV):
 
 """
 pv到类别的对应关系，可自定义
+0.1 0.2 4 18 78
 """
 def get_class(pv_str):
     pv = int(pv_str)
     
-    if pv<20:
+    if pv<10:
         return 0
-    elif pv < 40:
+    elif pv < 100:
         return 1
-    elif pv < 200:
+    elif pv < 500:
         return 2
     elif pv < 1000:
         return 3
@@ -42,28 +44,26 @@ def get_class(pv_str):
 """
 生成数据x和y
 file_list：要遍历的特征文件的list，可以选取1-21中的任意多个文件
-feature_list：要使用的特征索引的list，一共16个特征，特征索引和特征名字的对应关系如下
-0--标题
-1--createtime
-2--displaytype_one_hot
-3--formtype_one_hot
-4--duration
-5--detail
-6--keywords
-7--releasetime
-8--主题_one_hot
-9--program_type_one_hot
-10-演员_one_hot
-11-星期vector
-12-时间vector
-13-创建时间间隔
-14-上映时间间隔
-15-历史pv
-16-pv
+feature_list：要使用的特征索引的list，一共12个特征，特征索引（0-11）和特征名字的对应关系如下
+0--displaytype
+1--formtype
+2--duration
+3--主题_one_hot
+4--program_type
+5-演员_one_hot
+6-时间vector
+7-时间数
+8-星期数
+9-创建时间间隔
+10-上映时间间隔
+11-历史pv
+12-pv
 """
-def flatten(file_list, feature_list):
+def flatten(file_list):
     flatten_data = []
     flatten_target = []
+
+    count = 0
     for index in file_list:
         print('file ' + str(index) + ' is processing')
         with open(os.path.join(os.path.abspath('..'), 'feature_1.0', str(index) + '.txt'), 'r', encoding='UTF-8') as fread:
@@ -71,27 +71,38 @@ def flatten(file_list, feature_list):
             res = json.loads(res)
             
             for item in res:
-                if not judge(res[item][16]):
+                #if not judge(res[item][16]):
+                #    continue
+                if int(res[item][0]) != 1:
                     continue
+                count = count + 1
                 tmp = []
-                for i in feature_list:
-                    if i==10:
-                        res[item][i] = res[item][i][0:300]
-
-
-                    if i==13 or i==14:
-                        res[item][i] = math.exp(-1*res[item][i])
-
-                    if isinstance(res[item][i],list):
-                        tmp.extend(res[item][i])
-                    else:
-                        tmp.append(res[item][i])
+                tmp.extend(res[item][6])
+                tmp.append(res[item][11])
                 flatten_data.append(tmp)
-
-                flatten_target.append(get_class(res[item][16]))
-
-
+                flatten_target.append(int(res[item][12]))
+                   
+    target = list(flatten_target)
+    target.sort(reverse=True)
+    level1 = int(len(target)*0.001)
+    level2 = int(len(target)*0.003)
+    level3 = int(len(target)*0.043)
+    level4 = int(len(target)*0.243)
+    print(str(target[0]) + ' ' + str(target[len(target)-1]))
+    print(str(target[level1]) + ' ' + str(target[level2]) + ' ' + str(target[level3]) + ' ' + str(target[level4]))
+    for i in range(len(flatten_target)):
+        if flatten_target[i] < target[level4]:
+            flatten_target[i] = 0 
+        elif flatten_target[i] < target[level3]:
+            flatten_target[i] = 1
+        elif flatten_target[i] < target[level2]:
+            flatten_target[i] = 2
+        elif flatten_target[i] < target[level1]:
+            flatten_target[i] = 3
+        else:
+            flatten_target[i] = 4
     
+    print(count)
     with open(os.path.join(os.path.abspath('..'), 'dataset', 'data.txt'), 'w', encoding='UTF-8') as fwrite:
         fwrite.write(json.dumps(flatten_data, ensure_ascii=False))
     with open(os.path.join(os.path.abspath('..'), 'dataset', 'target.txt'), 'w', encoding='UTF-8') as fwrite:
@@ -154,9 +165,8 @@ def flatten_incomplete(file_list, feature_list):
 
 if __name__ == '__main__':
 
-
-    flatten([1,2,3,4,5],[2,3,4,8,9,10,11,12,13,14,15])
-    flatten_incomplete([1,2,3,4,5],[2,3,4,8,9,10,11,12,13,14])
+    #flatten([1,2])
+    flatten([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21])
 
 
 

@@ -45,7 +45,7 @@ def process_dat():
                     temp = line.split('|')
                     if temp[1] == '' or temp[1] == 'LIST' or temp[1] == 'ITEM' or temp[5] == '-998' or temp[5] == '' or (not temp[5].isdigit()):
                         continue
-                    fwrite.write(temp[0] + '|' + temp[1] + '|' + temp[5][0:9] + '|' + temp[6] + '\r')
+                    fwrite.write(temp[0] + '|' + temp[1] + '|' + temp[5][0:9] + '|' + temp[6] + '\n')
                     fwrite.flush()
             count = count + 1
             print('file' + str(count) + ' : ' + str(file) + ' has done')
@@ -60,6 +60,7 @@ def process_csv():
     dict = {}
     with open(os.path.join(rootdir, 'result.csv'), 'r', encoding='UTF-8') as fread:
         for line in fread.readlines():
+            line = line.replace('\n','').replace('\r','')
             temp = line.split('|')
             key = temp[0] + '_' + temp[2]
             if key in dict.keys():
@@ -70,7 +71,7 @@ def process_csv():
     with open(os.path.join(rootdir, 'result_merge.csv'), 'w', encoding='UTF-8') as fwrite:
         for item in dict:
             temp = item.split('_')
-            fwrite.write(temp[0] + '|' + temp[1] + '|' + str(dict[item]) + '\r')
+            fwrite.write(temp[0] + '|' + temp[1] + '|' + str(dict[item]) + '\n')
 
 
 
@@ -108,15 +109,12 @@ def get_IDs():
             count = count + 1
             temp = line.split('|')
             Idset.add(temp[1])
-            # if len(Idset) >= 25000:
-            #    break
     print(str(count) + ' ' + str(len(Idset)))
     return Idset
 
 
 """
 将节目ID的集合以单位为10000划分到21个txt文件中去
-2.txt文件中有一个‘yes_id’什么的，我给手动删除了，所以2.txt只有9999个ID
 """
 def write_IDs():
     IDs_dir = os.path.join(os.path.abspath('..'), 'IDs')
@@ -129,11 +127,11 @@ def write_IDs():
         if count % 10000 == 0:
             with open(os.path.join(IDs_dir, str(int(count / 10000)) + '.txt'), 'w', encoding='UTF-8') as fwrite:
                 for ID in ids_temp:
-                    fwrite.write(str(ID) + '\r')
+                    fwrite.write(str(ID) + '\n')
             ids_temp.clear()
     with open(os.path.join(IDs_dir, str(int(1 + count / 10000)) + '.txt'), 'w', encoding='UTF-8') as fwrite:
         for ID in ids_temp:
-            fwrite.write(str(ID) + '\r')
+            fwrite.write(str(ID) + '\n')
 
 
 """
@@ -143,6 +141,7 @@ def split_result_merge_csv():
     dict = {}
     with open(os.path.join(os.path.abspath('..'), 'dat', 'result_merge.csv'), 'r', encoding='UTF-8') as fread:
         for line in fread.readlines():
+            line = line.replace('\r','').replace('\n','')
             temp = line.split('|')
             if temp[1] not in dict.keys():
                 dict[temp[1]] = []
@@ -152,10 +151,32 @@ def split_result_merge_csv():
         print('file ' + str(index) + ' is processing')
         with open(os.path.join(os.path.abspath('..'), 'IDs', str(index)+'.txt'), 'r', encoding='UTF-8') as fread, open(os.path.join(os.path.abspath('..'), 'dat_1.0', str(index)+'.txt'), 'w', encoding='UTF-8') as fwrite:
             for line in fread.readlines():
-                line = line.strip()
+                line = line.replace('\r','').replace('\n','')
                 for item in dict[line]:
                     temp = item.split('_')
-                    fwrite.write(temp[0] + '|' + line + '|' + temp[1])
+                    fwrite.write(temp[0] + '|' + line + '|' + temp[1] + '\n')
+
+
+def get_history_pv_data():
+    for index in range(1,22):
+        print('file ' + str(index) + ' is processing')
+        with open(os.path.join(os.path.abspath('..'), 'dat_1.0', str(index) + '.txt'), 'r', encoding='UTF-8') as fread, \
+             open(os.path.join(os.path.abspath('..'), 'dat_2.0', str(index) + '.txt'), 'w', encoding='UTF-8') as fwrite:
+
+            previous_pv = {}
+
+            for line in fread.readlines():
+                line = line.replace('\r','').replace('\n','')
+                tmp = line.split('|')
+
+                if tmp[1] not in previous_pv.keys():
+                    previous_pv.clear()
+                else:
+                    interval = int(tmp[0])-previous_pv[tmp[1]][0]
+                    if interval==1 or interval==77:
+                        fwrite.write(tmp[0] + '|' + tmp[1] + '|' + str(previous_pv[tmp[1]][1]) + '|' + tmp[2] + '\n') #时间 ID 历史PV 当前PV
+                
+                previous_pv[tmp[1]] = [int(tmp[0]),int(tmp[2])]
 
 
 """
@@ -198,8 +219,9 @@ def read_IDs(num):
         ID_list = []
         res = []
         for line in fread.readlines():
+            line = line.replace('\r','').replace('\n','')
             count = count + 1
-            ID_list.append(line.strip())
+            ID_list.append(line)
             if count % 100 == 0:
                 print(count)
                 temp = es_search(ID_list)
@@ -221,8 +243,40 @@ def read_IDs_all():
 
 
 """
-得到所有节目的详细信息，测试调研用
+过滤垃圾数据，仍存到21个文件里边
 """
+def get_clean_data():
+    count = 0
+    program_information_dir = os.path.join(os.path.abspath('..'), 'program_information')
+    program_information_1_dir = os.path.join(os.path.abspath('..'), 'program_information_1.0')
+    for index in range(1, 22):
+        with open(os.path.join(program_information_dir, str(index) + '.txt'), 'r', encoding='UTF-8')    as fread:
+            res = fread.read()
+            res = json.loads(res)
+            for i in range(len(res) - 1, -1, -1):
+                if int(res[i][6]) == 0 or int(res[i][3]) == 0 or (not res[i][8]) or isinstance(res[i][9], dict) or \
+                        res[i][7] == '':
+                    res.remove(res[i])
+                elif isinstance(res[i][8], list):
+                    temp = ''
+                    for j in range(len(res[i][8])):
+                        if j != len(res[i][8]) - 1:
+                            temp = temp + str(res[i][8][j]) + ','
+                        else:
+                            temp = temp + str(res[i][8][j])
+                    res[i][8] = temp
+            count += len(res)
+            with open(os.path.join(program_information_1_dir, str(index) + '.txt'), 'w', encoding='UTF-8') as fwrite:
+                res = json.dumps(res)
+                fwrite.write(res)
+                fwrite.flush()
+        print('file ' + str(index) + ' has done')
+    print(str(count))
+
+
+"""
+#得到所有节目的详细信息，测试调研用
+
 def get_all_information():
     res = {}
     program_information_dir = os.path.join(os.path.abspath('..'), 'feature')
@@ -235,9 +289,7 @@ def get_all_information():
     return res
 
 
-"""
-统计数据信息，测试调研用
-"""
+#统计数据信息，测试调研用
 def statics():
     res = get_all_information()
     print('done')
@@ -285,38 +337,8 @@ def statics():
                     print(i[0])
     print(str(count_1000) + ' ' + str(count_1000_yes) + ' ' + str(count_1001) + ' ' + str(count_1001_6) + ' ' + str(
         count_1001_6_yes) + ' ' + str(count_1001_7) + ' ' + str(count_1001_7_yes))
-
-
 """
-过滤垃圾数据，仍存到21个文件里边
-"""
-def get_clean_data():
-    count = 0
-    program_information_dir = os.path.join(os.path.abspath('..'), 'program_information')
-    program_information_1_dir = os.path.join(os.path.abspath('..'), 'program_information_1.0')
-    for index in range(1, 22):
-        with open(os.path.join(program_information_dir, str(index) + '.txt'), 'r', encoding='UTF-8')    as fread:
-            res = fread.read()
-            res = json.loads(res)
-            for i in range(len(res) - 1, -1, -1):
-                if int(res[i][6]) == 0 or int(res[i][3]) == 0 or (not res[i][8]) or isinstance(res[i][9], dict) or \
-                        res[i][7] == '':
-                    res.remove(res[i])
-                elif isinstance(res[i][8], list):
-                    temp = ''
-                    for j in range(len(res[i][8])):
-                        if j != len(res[i][8]) - 1:
-                            temp = temp + str(res[i][8][j]) + ','
-                        else:
-                            temp = temp + str(res[i][8][j])
-                    res[i][8] = temp
-            count += len(res)
-            with open(os.path.join(program_information_1_dir, str(index) + '.txt'), 'w', encoding='UTF-8') as fwrite:
-                res = json.dumps(res)
-                fwrite.write(res)
-                fwrite.flush()
-        print('file ' + str(index) + ' has done')
-    print(str(count))
+
 
 
 
@@ -324,7 +346,9 @@ def get_clean_data():
 if __name__ == '__main__':
     #process_dat()
     #process_csv()
+    #get_IDs()
     #write_IDs
     #split_result_merge_csv()
+    #get_history_pv_data()
     #read_IDs_all()
     #get_clean_data()

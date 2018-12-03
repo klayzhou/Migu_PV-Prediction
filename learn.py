@@ -13,7 +13,7 @@ from collections import Counter
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression, Lasso, LogisticRegression
 
-from sklearn.metrics import mean_squared_error, classification_report, precision_recall_fscore_support, confusion_matrix
+from sklearn.metrics import mean_squared_error, classification_report, precision_recall_fscore_support, confusion_matrix, roc_auc_score
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
@@ -21,6 +21,7 @@ from imblearn.over_sampling import RandomOverSampler, SMOTE
 from imblearn.under_sampling import RandomUnderSampler
 from imblearn.ensemble import BalancedBaggingClassifier, BalancedRandomForestClassifier
 from tensorflow import keras
+from sklearn.preprocessing import label_binarize
 
 """
 获取数据x和y
@@ -35,13 +36,7 @@ def get_data():
         res = fread.read()
         target = json.loads(res)
           
-    with open(os.path.join(os.path.abspath('..'),'dataset','data_waiting.txt'),'r',encoding='UTF-8') as fread:
-        res = fread.read()
-        data.extend(json.loads(res))
-
-    with open(os.path.join(os.path.abspath('..'),'dataset','target_waiting.txt'),'r',encoding='UTF-8') as fread:
-        res = fread.read()
-        target.extend(json.loads(res))
+    
     
     data = numpy.array(data, dtype = 'float64')    
     target = numpy.array(target, dtype='int')
@@ -90,6 +85,8 @@ def RFC():
     print(classification_report(test_target,predicted_target))
     #行代表真实数据，列代表预测数据
     print(confusion_matrix(test_target,predicted_target, labels=[0,1,2,3,4], sample_weight=None))
+    #y_one_hot = label_binarize(test_target, numpy.arange(5))
+    #print(roc_auc_score(y_one_hot,predicted_target, average='micro'))
 
 def nn():
     test_data, test_target, train_data, train_target = get_data()
