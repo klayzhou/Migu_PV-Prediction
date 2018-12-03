@@ -72,7 +72,7 @@ def flatten(file_list):
             for item in res:
                 #if not judge(res[item][16]):
                 #    continue
-                if int(res[item][0]) != 1:
+                if int(res[item][0])!= 1:
                     continue
                 count = count + 1
                 tmp = []

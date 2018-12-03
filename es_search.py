@@ -97,13 +97,13 @@ def es_search(lst):
                     if 'keywordName' not in fields['KEYWORDS']['keyword'].keys():
                         fields['KEYWORDS']['keyword']['keywordName'] = ''
                     result.append([source['contid'], source['name'], source['createtime'], fields['DISPLAYTYPE'],fields['DisplayName'],fields['FORMTYPE'],
-                                   fields['CDuration'], fields['Detail'],fields['KEYWORDS']['keyword']['keywordName'],fields['propertyFileLists']['propertyFile']])
+                                   fields['CDuration'], fields['Detail'],fields['KEYWORDS']['keyword']['keywordName'], fields['propertyFileLists']['propertyFile']])
                 elif isinstance(fields['KEYWORDS']['keyword'], list):
                     keyword = []
                     for iter in fields['KEYWORDS']['keyword']:
                         if 'keywordName' in iter.keys():
                             keyword.append(iter['keywordName'])
-                    result.append([source['contid'], source['name'], source['createtime'], fields['DISPLAYTYPE'],fields['DisplayName'],
+                    result.append([source['contid'], source['name'], source['createtime'], fields['DISPLAYTYPE'], fields['DisplayName'],
                                    fields['FORMTYPE'], fields['CDuration'], fields['Detail'],keyword, fields['propertyFileLists']['propertyFile']])
                 else:
                     raise Exception

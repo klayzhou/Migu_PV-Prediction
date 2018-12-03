@@ -10,9 +10,9 @@ import os
 import numpy
 import imp
 from collections import Counter
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.linear_model import LinearRegression, Lasso, LogisticRegression
-
+from sklearn.metrics import mean_squared_error
 from sklearn.metrics import mean_squared_error, classification_report, precision_recall_fscore_support, confusion_matrix, roc_auc_score
 
 from sklearn.tree import DecisionTreeClassifier
@@ -46,21 +46,26 @@ def get_data():
     data_min = numpy.min(data, axis=0)
     data = (data - data_min)/(data_max - data_min)
     data = numpy.nan_to_num(data)
-    train_data,test_data,train_target,test_target = train_test_split(data,target,test_size=0.3,random_state=1)
-    count = Counter(train_target)
-    print(count)
 
-    print(train_data.shape[1])
-    #ee = EasyEnsemble(random_state=0, n_subsets=5, replacement=True)
-    #train_data, train_target = ee.fit_sample(train_data, train_target)
-    #print(train_data.shape)
-    #test_data, test_target = RandomUnderSampler(random_state=0).fit_sample(test_data, test_target)
+    train_data,test_data,train_target,test_target = train_test_split(data,target,test_size=0.3,random_state=1)
     #count = Counter(train_target)
     #print(count)
-    #test_data[:,24] = 0
+
+    #print(train_data.shape[1])
 
     return test_data, test_target, train_data, train_target
 
+"""
+try regression again 
+"""
+def Linear_Regression():
+    test_data, test_target, train_data, train_target = get_data()
+    model_LinearRegression = Lasso(alpha=0.1)
+    model_LinearRegression.fit(train_data, train_target)
+    predicted = model_LinearRegression.predict(test_data)
+    print(mean_squared_error(predicted, test_target)) 
+    print(predicted.tolist()[:30])
+    print(test_target.tolist()[:30])
 
 """
 逻辑斯蒂分类
@@ -105,5 +110,5 @@ def nn():
     #print(proba)
 
 if __name__ == '__main__':
-    RFC()
+    Linear_Regression()
     #Logistic_Regression()
