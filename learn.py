@@ -22,21 +22,17 @@ from imblearn.under_sampling import RandomUnderSampler
 from imblearn.ensemble import BalancedBaggingClassifier, BalancedRandomForestClassifier
 from tensorflow import keras
 from sklearn.preprocessing import label_binarize
+from sklearn.externals import joblib
+from sklearn.neighbors import KNeighborsRegressor
 
 """
 获取数据x和y
 """
-def get_data():
+def get_data(data_dir, target_dir):
     data = []
     target = []
-    with open(os.path.join(os.path.abspath('..'), 'dataset', 'data.txt'), 'r', encoding='UTF-8') as fread:
-        res = fread.read()
-        data = json.loads(res)
-    with open(os.path.join(os.path.abspath('..'), 'dataset', 'target.txt'), 'r', encoding='UTF-8') as fread:
-        res = fread.read()
-        target = json.loads(res)
-          
-    
+    data = numpy.loadtxt('../dataset/'+ data_dir)
+    target = numpy.loadtxt('../dataset/'+ target_dir)
     
     data = numpy.array(data, dtype = 'float64')    
     target = numpy.array(target, dtype='int')
@@ -47,13 +43,11 @@ def get_data():
     data = (data - data_min)/(data_max - data_min)
     data = numpy.nan_to_num(data)
 
-    train_data,test_data,train_target,test_target = train_test_split(data,target,test_size=0.3,random_state=1)
+    #train_data,test_data,train_target,test_target = train_test_split(data,target,test_size=0.3,random_state=1)
     #count = Counter(train_target)
     #print(count)
 
-    #print(train_data.shape[1])
-
-    return test_data, test_target, train_data, train_target
+    return data, target
 
 """
 try regression again 
@@ -66,6 +60,8 @@ def Linear_Regression():
     print(mean_squared_error(predicted, test_target)) 
     print(predicted.tolist()[:30])
     print(test_target.tolist()[:30])
+    # save_path_name = ''
+    #joblib.dump(model, save_path_name)
 
 """
 逻辑斯蒂分类
@@ -80,9 +76,10 @@ def Logistic_Regression():
 
 
 def RFC():
-    test_data, test_target, train_data, train_target = get_data()
-    model_rfc = BalancedBaggingClassifier(n_estimators=100, base_estimator=DecisionTreeClassifier(), sampling_strategy='auto',replacement=False,random_state=0)
-
+    train_data, train_target = get_data('data.txt', 'target.txt')
+    test_data, test_target = get_data('test_data.txt', 'test_target.txt')
+    model_rfc = BalancedBaggingClassifier(n_estimators=100, base_estimator=DecisionTreeClassifier(), sampling_strategy='auto', replacement=False,random_state=0)
+    #return model_rfc
     #model_rfc = BalancedRandomForestClassifier(n_estimators=50, random_state=0)
 
     model_rfc.fit(train_data, train_target)
@@ -92,6 +89,128 @@ def RFC():
     print(confusion_matrix(test_target,predicted_target, labels=[0,1,2,3,4], sample_weight=None))
     #y_one_hot = label_binarize(test_target, numpy.arange(5))
     #print(roc_auc_score(y_one_hot,predicted_target, average='micro'))
+
+def KNN_train():
+    print('knn model is training')
+    train_data = numpy.loadtxt('../dataset/'+ 'knn_data.txt')
+    train_target = numpy.loadtxt('../dataset/'+ 'knn_target.txt')
+
+    copy = train_data[:, 0:29] #no normalize
+    data = train_data[:, 29:]
+    data_max = numpy.max(data, axis=0)#axis=0 -> max value of each column
+    data_max[data_max==0]=1
+    data_min = numpy.min(data, axis=0)
+    data = (data - data_min)/(data_max - data_min)
+    data = numpy.nan_to_num(data)
+    train_data = numpy.hstack((copy, data))
+
+    data_dict = {}
+    target_dict = {}
+    train_data = train_data.tolist()
+    for index in range(len(train_data)):
+        item = train_data[index]
+        key = str(item[0])+'_'+str(item[1])+'_'+str(item[2])
+        if key not in data_dict:
+            data_dict[key] = [item[29:]]
+            target_dict[key] = [[train_target[index]]]
+        else:
+            data_dict[key].append(item[29:])
+            target_dict[key].append(train_target[index])
+
+    model_dict = {}
+    for key in data_dict:
+        neighbors = 4
+        if len(data_dict[key])<4:
+            neighbors = len(data_dict[key])
+        data = numpy.array(data_dict[key])
+        model = KNeighborsRegressor(n_neighbors=neighbors)
+        model.fit(numpy.array(data), numpy.array(target_dict[key]))
+        model_dict[key]= model
+
+    print('knn model is done')
+    return model_dict
+
+
+def KNN_predict():
+    print('knn model is testing')
+    test_data = numpy.loadtxt('../dataset/'+ 'knn_test_data.txt')
+    #test_target = numpy.loadtxt('../dataset/'+ 'knn_test_target.txt')
+
+    copy = test_data[:, 0:29] #no normalize
+    #print(copy.shape)
+    data = test_data[:, 29:]
+    data_max = numpy.max(data, axis=0)#axis=0 -> max value of each column
+    data_max[data_max==0]=1
+    data_min = numpy.min(data, axis=0)
+    data = (data - data_min)/(data_max - data_min)
+    data = numpy.nan_to_num(data)
+    #print(data.shape)
+    test_data = numpy.hstack((copy,data))
+    #print(test_data.shape)
+
+
+    test_data = test_data.tolist()
+    predict_target = []
+    data_dict = {}
+    
+    for item in test_data:
+        key = str(item[0])+'_'+str(item[1])+'_'+str(item[2])
+        if key not in data_dict:
+            data_dict[key] = []
+        data_dict[key].append(item[3:])
+
+    data, target  = [], []
+
+    model_dict = KNN_train()
+    for key in data_dict:
+        if key in model_dict:
+            model = model_dict[key]
+            value = numpy.array(data_dict[key])
+            tmp = model.predict(value[:,26:])
+            tmp = tmp.reshape(-1,1)
+            tmp_data = value[:, :24]
+            tmp_data = numpy.hstack((tmp_data, tmp))
+            target.extend(value[:, 25])
+            data.extend(tmp_data)
+
+        else:
+            tmp = numpy.array([[5] for i in range(value.shape[0])])
+            tmp_data = value[:, :24]
+            tmp_data = numpy.hstack((tmp_data, tmp))
+            target.extend(value[:, 25])
+            data.extend(tmp_data)
+    print('test target:')
+    print(Counter(target))
+    data = numpy.array(data)
+    target = numpy.array(target)
+    print('knn predict is done')
+    return data, target
+
+
+def coldstart():
+    print('cold start is training')
+    knn_data, knn_target = KNN_predict()
+
+    data_max = numpy.max(knn_data, axis=0)  # axis=0 -> max value of each column
+    data_max[data_max == 0] = 1
+    data_min = numpy.min(knn_data, axis=0)
+    data = (knn_data - data_min) / (data_max - data_min)
+    knn_data = numpy.nan_to_num(data)
+
+    train_data, train_target = get_data('train_data.txt', 'train_target.txt')
+    print('train_target:')
+    print(Counter(train_target))
+    #test_data, test_target = get_data('test_data.txt', 'test_target.txt')
+    model_rfc = BalancedBaggingClassifier(n_estimators=100, base_estimator=DecisionTreeClassifier(),
+                                          sampling_strategy='auto', replacement=False, random_state=0)
+    model_rfc.fit(train_data, train_target)
+
+    predicted_target = model_rfc.predict(knn_data)
+    print(classification_report(knn_target, predicted_target))
+    # 行代表真实数据，列代表预测数据
+    print(confusion_matrix(knn_target, predicted_target, labels=[0, 1, 2, 3, 4], sample_weight=None))
+
+
 
 def nn():
     test_data, test_target, train_data, train_target = get_data()
@@ -110,5 +229,5 @@ def nn():
     #print(proba)
 
 if __name__ == '__main__':
-    Linear_Regression()
+    coldstart()
     #Logistic_Regression()
