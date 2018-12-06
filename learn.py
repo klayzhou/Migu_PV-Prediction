@@ -106,9 +106,9 @@ def KNN_train():
 
     data_dict = {}
     target_dict = {}
-    train_data = train_data.tolist()
-    for index in range(len(train_data)):
-        item = train_data[index]
+    num = train_data.shape[0]
+    for index in range(num):
+        item = train_data[index, :]
         key = str(item[0])+'_'+str(item[1])+'_'+str(item[2])
         if key not in data_dict:
             data_dict[key] = [item[29:]]
@@ -149,38 +149,48 @@ def KNN_predict():
     #print(test_data.shape)
 
 
-    test_data = test_data.tolist()
     predict_target = []
     data_dict = {}
-    
-    for item in test_data:
+    num = test_data.shape[0]
+    for index in range(num):
+        item = test_data[index, :]
         key = str(item[0])+'_'+str(item[1])+'_'+str(item[2])
         if key not in data_dict:
             data_dict[key] = []
         data_dict[key].append(item[3:])
 
-    data, target  = [], []
-
+    data, target = [], []
+    test_target  = []
+    predicted = []
     model_dict = KNN_train()
     for key in data_dict:
         if key in model_dict:
             model = model_dict[key]
             value = numpy.array(data_dict[key])
-            tmp = model.predict(value[:,26:])
-            tmp = tmp.reshape(-1,1)
+            tmp = model.predict(value[:, 26:])
+
+            predicted.extend(tmp)
+            test_target.extend(value[:, 24])
+
+            tmp = tmp.reshape(-1, 1)
             tmp_data = value[:, :24]
             tmp_data = numpy.hstack((tmp_data, tmp))
             target.extend(value[:, 25])
             data.extend(tmp_data)
-
         else:
             tmp = numpy.array([[5] for i in range(value.shape[0])])
             tmp_data = value[:, :24]
             tmp_data = numpy.hstack((tmp_data, tmp))
             target.extend(value[:, 25])
+
+            predicted.extend(tmp.reshape(-1))
+            test_target.extend(value[:, 24])
+
             data.extend(tmp_data)
-    print('test target:')
-    print(Counter(target))
+
+    print('mean squared error')
+    print(mean_squared_error(numpy.array(predicted), numpy.array(test_target)))
+    
     data = numpy.array(data)
     target = numpy.array(target)
     print('knn predict is done')
@@ -229,5 +239,5 @@ def nn():
     #print(proba)
 
 if __name__ == '__main__':
-    coldstart()
+    KNN_predict()
     #Logistic_Regression()
