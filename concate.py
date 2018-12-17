@@ -71,12 +71,7 @@ def concate_to_feature_1():
             dataset.clear()
 
 
-    vv = np.array(vv, dtype='int')
-    print('total nums:'+str(total_num))
-    print(np.max(vv))
-    print(np.sum(np.where(vv>5,1,0)))
-    print(np.sum(np.where(vv>10,1,0)))
-    print(np.sum(np.where(vv>15,1,0)))
+
 
 if __name__ == '__main__':
     concate_to_feature_1()

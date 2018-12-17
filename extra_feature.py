@@ -356,7 +356,7 @@ def extra_feature_optimization():
     # find the top 2000 actors
     counter = collections.Counter(actor_lst)
     sorted_actor = sorted(counter.items(), key= lambda x:x[1], reverse=True)
-    invalid_actor = dict(sorted_actor[:300])
+    invalid_actor = dict(sorted_actor[:2000])
 
     # one-hot encoding for actor id
     num = 0
