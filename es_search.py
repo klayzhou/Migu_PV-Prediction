@@ -9,64 +9,63 @@
 # 剧集类型只有6-9这4种，其中，所有的7和8都有duration，所有9都没有duration，大部分6都有duration --> 过滤掉duration为0的，可以解决没有duration的问题
 # 一级分类编号缺失的有3个，其中有两个是一级分类名称缺失，但是这两个的duration都为0，所以实际上只有一条数据有bug --> 过滤掉一级分类编号缺失的3条数据
 
-from urllib import request
+from urllib import request, parse
 import json
 
 
 def query(lst) :
     query_data = {
-        "size":100,
-        "query":{
-            'constant_score':{
-                 'filter':{
-                     'terms':{
-                         'contid': lst
-                     }
-                 }
+        "size": 100,
+        "query": {
+             "constant_score": {
+                "filter":{
+                    "terms":{
+                        "contid": lst
+                    }
+                }
             }
         }
     }
-    #print(str(query_data))
+
     return query_data
 
 def es_search_full(list):
 
-    data = '{"index":["poms"]}\n' + json.dumps(query(list)) +'\n'
+    data = json.dumps(query(list)).encode('utf-8')
+    print(data)
 
     headers = {
-        'content-type': 'application/x-ndjson',
-        "kbn-version": "6.1.1"
+        'content-type': 'application/json'
     }
 
-    req = request.Request("http://183.192.162.101:8080/elasticsearch/_msearch", data=bytes(data, 'utf-8'), headers=headers, method='POST')
-
-    f = open('result.txt','w')
+    req = request.Request("http://10.150.29.111:9200/poms/contents/_search", data=data, headers=headers)
+    print(req)
+    f = open('result.txt', 'w')
 
     with request.urlopen(req) as response:
         if response.status==200:
             print('Status:',response.status,response.reason)
             data = json.loads(response.read())
-            f.write(str(data['responses']))
+            f.write(str(data))
         else:
             raise Exception
 
 def es_search(lst):
 
-    data = '{"index":["poms"]}\n' + json.dumps(query(lst)) +'\n'
+    data = json.dumps(query(lst)).encode('utf-8')
 
     headers = {
-        'content-type': 'application/x-ndjson',
-        "kbn-version": "6.1.1"
+        'content-type': 'application/json'
     }
 
-    req = request.Request("http://183.192.162.101:8080/elasticsearch/_msearch", data=bytes(data, 'utf-8'), headers=headers, method='POST')
+    req = request.Request("http://10.150.29.111:9200/poms/contents/_search", data=data, headers=headers)
 
     result = []
 
     with request.urlopen(req) as response:
         if response.status == 200:
             # not sure the response of elasticsearch only one element [0]?
-            data = json.loads(response.read())['responses'][0]['hits']['hits'] #the useful response, delete useless headers
+            data = json.loads(response.read())['hits']['hits'] #the useful response, delete useless headers
 
             for item in data:
                 source = item['_source']
