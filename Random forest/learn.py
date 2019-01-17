@@ -5,10 +5,12 @@
 2. 使用不同的模型对x和y进行交叉验证
 """
 
+import time
 import json
 import os
 import numpy
 import imp
+import math
 from collections import Counter
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.linear_model import LinearRegression, Lasso, LogisticRegression
@@ -79,120 +81,61 @@ def RFC():
     train_data, train_target = get_data('train_data.txt', 'train_target.txt')
     test_data, test_target = get_data('test_data.txt', 'test_target.txt')
     model_rfc = BalancedBaggingClassifier(n_estimators=100, base_estimator=DecisionTreeClassifier(), sampling_strategy='auto', replacement=False,random_state=0)
-    #return model_rfc
-    #model_rfc = BalancedRandomForestClassifier(n_estimators=50, random_state=0)
 
     model_rfc.fit(train_data, train_target)
     predicted_target = model_rfc.predict(test_data)
     print(classification_report(test_target,predicted_target))
     #行代表真实数据，列代表预测数据
     print(confusion_matrix(test_target,predicted_target, labels=[0,1,2,3,4], sample_weight=None))
-    #y_one_hot = label_binarize(test_target, numpy.arange(5))
-    #print(roc_auc_score(y_one_hot,predicted_target, average='micro'))
+
+def RFC_knn():
+    train_data, train_target = get_data('knn_data.txt', 'train_target.txt')
+    test_data, test_target = get_data('knn_test_data.txt', 'test_target.txt')
+    model_rfc = BalancedBaggingClassifier(n_estimators=100, base_estimator=DecisionTreeClassifier(), sampling_strategy='auto', replacement=False,random_state=0)
+
+    model_rfc.fit(train_data, train_target)
+    predicted_target = model_rfc.predict(test_data)
+    print(classification_report(test_target, predicted_target))
+    #行代表真实数据，列代表预测数据
+    print(confusion_matrix(test_target,predicted_target, labels=[0,1,2,3,4], sample_weight=None))
 
 def KNN_train():
     print('knn model is training')
-    train_data = numpy.loadtxt('../dataset/'+ 'knn_data.txt')
-    train_target = numpy.loadtxt('../dataset/'+ 'knn_target.txt')
+    train_data, train_target = get_data('knn_data.txt', 'knn_target.txt')
 
-    copy = train_data[:, 0:29] #no normalize
-    data = train_data[:, 29:]
-    data_max = numpy.max(data, axis=0)#axis=0 -> max value of each column
-    data_max[data_max==0]=1
-    data_min = numpy.min(data, axis=0)
-    data = (data - data_min)/(data_max - data_min)
-    data = numpy.nan_to_num(data)
-    train_data = numpy.hstack((copy, data))
-
-    data_dict = {}
-    target_dict = {}
-    num = train_data.shape[0]
-    for index in range(num):
-        item = train_data[index, :]
-        key = str(item[0])+'_'+str(item[1])+'_'+str(item[2])
-        if key not in data_dict:
-            data_dict[key] = [item[29:]]
-            target_dict[key] = [[train_target[index]]]
-        else:
-            data_dict[key].append(item[29:])
-            target_dict[key].append(train_target[index])
-
-    model_dict = {}
-    for key in data_dict:
-        neighbors = 4
-        if len(data_dict[key])<4:
-            neighbors = len(data_dict[key])
-        data = numpy.array(data_dict[key])
-        model = KNeighborsRegressor(n_neighbors=neighbors)
-        model.fit(numpy.array(data), numpy.array(target_dict[key]))
-        model_dict[key]= model
-
+    model = KNeighborsRegressor(n_neighbors=1)
+    model.fit(train_data[:, 24:], train_target)
     print('knn model is done')
-    return model_dict
+    return model
 
 
 def KNN_predict():
     print('knn model is testing')
-    test_data = numpy.loadtxt('../dataset/'+ 'knn_test_data.txt')
-    #test_target = numpy.loadtxt('../dataset/'+ 'knn_test_target.txt')
+    test_data, test_target = get_data('knn_test_data.txt', 'knn_test_target.txt')
+    model = KNN_train()
 
-    copy = test_data[:, 0:29] #no normalize
-    #print(copy.shape)
-    data = test_data[:, 29:]
-    data_max = numpy.max(data, axis=0)#axis=0 -> max value of each column
-    data_max[data_max==0]=1
-    data_min = numpy.min(data, axis=0)
-    data = (data - data_min)/(data_max - data_min)
-    data = numpy.nan_to_num(data)
-    #print(data.shape)
-    test_data = numpy.hstack((copy,data))
-    #print(test_data.shape)
-
-
+    print(test_data.shape)
     predict_target = []
-    data_dict = {}
+    start = time.time()
     num = test_data.shape[0]
-    for index in range(num):
-        item = test_data[index, :]
-        key = str(item[0])+'_'+str(item[1])+'_'+str(item[2])
-        if key not in data_dict:
-            data_dict[key] = []
-        data_dict[key].append(item[3:])
+    for i in range(math.ceil(num/1000)):
+        print('round '+str(i))
+        predict_lst = model.predict(test_data[1000*i:1000*(i+1), 24:])
+        predict_target.extend(predict_lst)
+        end = time.time()
+        print(end-start)
 
-    data, target = [], []
-    test_target  = []
-    predicted = []
-    model_dict = KNN_train()
-    for key in data_dict:
-        if key in model_dict:
-            model = model_dict[key]
-            value = numpy.array(data_dict[key])
-            tmp = model.predict(value[:, 26:])
+    predict_target = numpy.array(predict_target).reshape(-1,1)
+    print(predict_target.shape)
 
-            predicted.extend(tmp)
-            test_target.extend(value[:, 24])
+    target_max = numpy.max(predict_target)#axis=0 -> max value of each column
+    target_min = numpy.min(predict_target)
+    predict_target = (predict_target - target_min)/(target_max - target_min)
+    predict_target = numpy.nan_to_num(predict_target)
+    data = numpy.hstack((test_data[:,:24], predict_target))
 
-            tmp = tmp.reshape(-1, 1)
-            tmp_data = value[:, :24]
-            tmp_data = numpy.hstack((tmp_data, tmp))
-            target.extend(value[:, 25])
-            data.extend(tmp_data)
-        else:
-            tmp = numpy.array([[5] for i in range(value.shape[0])])
-            tmp_data = value[:, :24]
-            tmp_data = numpy.hstack((tmp_data, tmp))
-            target.extend(value[:, 25])
+    target = numpy.loadtxt('../dataset/test_target.txt')
 
-            predicted.extend(tmp.reshape(-1))
-            test_target.extend(value[:, 24])
-
-            data.extend(tmp_data)
-
-    #print('mean squared error')
-    #print(mean_squared_error(numpy.array(predicted), numpy.array(test_target)))
-    
-    data = numpy.array(data)
-    target = numpy.array(target)
     print('knn predict is done')
     return data, target
 
@@ -200,12 +143,6 @@ def KNN_predict():
 def coldstart():
     print('cold start is training')
     knn_data, knn_target = KNN_predict()
-
-    data_max = numpy.max(knn_data, axis=0)  # axis=0 -> max value of each column
-    data_max[data_max == 0] = 1
-    data_min = numpy.min(knn_data, axis=0)
-    data = (knn_data - data_min) / (data_max - data_min)
-    knn_data = numpy.nan_to_num(data)
 
     train_data, train_target = get_data('train_data.txt', 'train_target.txt')
     print('train_target:')
@@ -240,5 +177,5 @@ def nn():
 
 if __name__ == '__main__':
     RFC()
-    coldstart()
+    RFC_knn()
     #Logistic_Regression()

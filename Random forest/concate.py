@@ -15,19 +15,19 @@ import numpy
 Key:
     time_contentID
 Value(13):
-    displaytype
-    formtype
-    duration
-    主题_one_hot
-    program_type
-    演员_one_hot
-    时间vector
-    时间数
-    星期数
-    创建时间间隔
-    上映时间间隔
-    历史pv
-    PV值
+    displaytype #0
+    formtype #1
+    duration #2
+    主题_one_hot #3
+    program_type #4
+    演员_one_hot #5
+    时间vector #6
+    时间数 #7
+    星期数 #8
+    创建时间间隔 #9
+    上映时间间隔 #10
+    历史pv #11
+    PV值 #12
 """
 def concate_to_feature_1():
     for index in range(1,22):
